@@ -1,0 +1,2 @@
+legged_lab/assets/tienkung_pro/usd/configuration/*.usd filter=lfs diff=lfs merge=lfs -text
+legged_lab/assets/tienkung_walkerE/usd/configuration/*.usd filter=lfs diff=lfs merge=lfs -text
