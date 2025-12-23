@@ -7,3 +7,8 @@ run_bash.sh
 wandb
 MUJOCO_LOG.TXT
 .history
+ACCAD_SMPL-X G/
+ACCAD_SMPL-X N/
+models/
+legged_lab_walkerE_modified_v1.zip
+docs/URDF_lite_vs_pro_comparison.xlsx
