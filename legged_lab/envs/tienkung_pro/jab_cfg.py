@@ -63,10 +63,10 @@ class GaitCfg:
 @configclass
 class JabRewardCfg:
     # Jab keeps the base stable but prioritizes upper-body motion tracking via AMP.
-    track_lin_vel_xy_exp = RewTerm(func=mdp.track_lin_vel_xy_yaw_frame_exp, weight=0.5, params={"std": 0.25})
-    track_ang_vel_z_exp = RewTerm(func=mdp.track_ang_vel_z_world_exp, weight=0.3, params={"std": 0.5})
-    lin_vel_z_l2 = RewTerm(func=mdp.lin_vel_z_l2, weight=-0.5)
-    ang_vel_xy_l2 = RewTerm(func=mdp.ang_vel_xy_l2, weight=-0.05)
+    track_lin_vel_xy_exp = RewTerm(func=mdp.track_lin_vel_xy_yaw_frame_exp, weight=0.1, params={"std": 0.25})
+    track_ang_vel_z_exp = RewTerm(func=mdp.track_ang_vel_z_world_exp, weight=0.05, params={"std": 0.5})
+    lin_vel_z_l2 = RewTerm(func=mdp.lin_vel_z_l2, weight=-0.2)
+    ang_vel_xy_l2 = RewTerm(func=mdp.ang_vel_xy_l2, weight=-0.02)
     energy = RewTerm(func=mdp.energy, weight=-1e-3)
     dof_acc_l2 = RewTerm(func=mdp.joint_acc_l2, weight=-1.0e-7)
     action_rate_l2 = RewTerm(func=mdp.action_rate_l2, weight=-0.005)
@@ -74,17 +74,15 @@ class JabRewardCfg:
         func=mdp.undesired_contacts,
         weight=-1.0,
         params={
-            "sensor_cfg": SceneEntityCfg(
-                "contact_sensor", body_names=["knee_pitch.*", "shoulder_roll.*", "elbow_pitch.*", "pelvis"]
-            ),
+            "sensor_cfg": SceneEntityCfg("contact_sensor", body_names=["knee_pitch.*", "pelvis"]),
             "threshold": 1.0,
         },
     )
     body_orientation_l2 = RewTerm(
-        func=mdp.body_orientation_l2, params={"asset_cfg": SceneEntityCfg("robot", body_names="pelvis")}, weight=-1.0
+        func=mdp.body_orientation_l2, params={"asset_cfg": SceneEntityCfg("robot", body_names="pelvis")}, weight=-0.2
     )
-    flat_orientation_l2 = RewTerm(func=mdp.flat_orientation_l2, weight=-0.5)
-    termination_penalty = RewTerm(func=mdp.is_terminated, weight=-100.0)
+    flat_orientation_l2 = RewTerm(func=mdp.flat_orientation_l2, weight=-0.1)
+    termination_penalty = RewTerm(func=mdp.is_terminated, weight=-20.0)
     feet_slide = RewTerm(
         func=mdp.feet_slide,
         weight=-0.1,
@@ -128,7 +126,7 @@ class JabRewardCfg:
     )
     joint_deviation_arms = RewTerm(
         func=mdp.joint_deviation_l1,
-        weight=-0.02,
+        weight=-0.005,
         params={"asset_cfg": SceneEntityCfg("robot", joint_names=["shoulder_roll_.*_joint", "shoulder_yaw_.*_joint"])},
     )
     joint_deviation_legs = RewTerm(
@@ -148,13 +146,13 @@ class JabRewardCfg:
     )
     upper_body_track = RewTerm(
         func=mdp.track_upper_body_pose_from_amp,
-        weight=2.0,
+        weight=4.0,
         params={"std": 0.4, "include_torso": True, "include_arms": True},
     )
     ankle_torque = RewTerm(func=mdp.ankle_torque, weight=-0.0002)
     ankle_action = RewTerm(func=mdp.ankle_action, weight=-0.0005)
-    hip_roll_action = RewTerm(func=mdp.hip_roll_action, weight=-0.2)
-    hip_yaw_action = RewTerm(func=mdp.hip_yaw_action, weight=-0.2)
+    hip_roll_action = RewTerm(func=mdp.hip_roll_action, weight=-0.05)
+    hip_yaw_action = RewTerm(func=mdp.hip_yaw_action, weight=-0.05)
     feet_y_distance = RewTerm(func=mdp.feet_y_distance, weight=-0.5)
 
 
@@ -186,7 +184,7 @@ class TienKungJabFlatEnvCfg:
         actor_obs_history_length=10,
         critic_obs_history_length=10,
         action_scale=0.25,
-        terminate_contacts_body_names=["knee_pitch.*", "shoulder_roll.*", "elbow_pitch.*", "pelvis"],
+        terminate_contacts_body_names=["knee_pitch.*", "pelvis"],
         feet_body_names=["ankle_roll.*"],
     )
     reward = JabRewardCfg()
