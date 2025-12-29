@@ -21,6 +21,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 import isaaclab.utils.math as math_utils
+import numpy as np
 import torch
 from isaaclab.assets import Articulation
 from isaaclab.managers import SceneEntityCfg
@@ -214,6 +215,56 @@ def feet_y_distance(env: TienKungEnv) -> torch.Tensor:
     y_distance_b = torch.abs(leftfoot_b[:, 1] - rightfoot_b[:, 1] - 0.299)
     y_vel_flag = torch.abs(env.command_generator.command[:, 1]) < 0.1
     return y_distance_b * y_vel_flag
+
+
+def track_upper_body_pose_from_amp(
+    env: BaseEnv | TienKungEnv, std: float, include_torso: bool = True, include_arms: bool = True
+) -> torch.Tensor:
+    """Track upper-body joint positions against the AMP reference motion."""
+    if not hasattr(env, "amp_loader_display"):
+        return torch.zeros(env.num_envs, device=env.device)
+
+    traj_len = float(env.amp_loader_display.trajectory_lens[0])
+    times = (env.episode_length_buf * env.step_dt).detach().cpu().numpy()
+    times = np.mod(times, traj_len)
+    traj_idxs = np.zeros(env.num_envs, dtype=np.int64)
+    ref_frame = env.amp_loader_display.get_full_frame_at_time_batch(traj_idxs, times)
+    dof_pos_frame = ref_frame[:, 6 : 6 + env.motion_dof]
+
+    target_chunks = []
+    current_chunks = []
+
+    if include_torso and env.motion_dof in (24, 30):
+        target_chunks.append(dof_pos_frame[:, 12:16])
+        current_chunks.append(env.robot.data.joint_pos[:, env.torso_head_ids])
+
+    if include_arms:
+        if env.motion_dof == 20:
+            target_chunks.extend([dof_pos_frame[:, 12:16], dof_pos_frame[:, 16:20]])
+            current_chunks.extend(
+                [env.robot.data.joint_pos[:, env.left_arm_ids], env.robot.data.joint_pos[:, env.right_arm_ids]]
+            )
+        elif env.motion_dof == 24:
+            target_chunks.extend([dof_pos_frame[:, 16:20], dof_pos_frame[:, 20:24]])
+            current_chunks.extend(
+                [env.robot.data.joint_pos[:, env.left_arm_ids], env.robot.data.joint_pos[:, env.right_arm_ids]]
+            )
+        elif env.motion_dof == 30:
+            target_chunks.extend([dof_pos_frame[:, 16:23], dof_pos_frame[:, 23:30]])
+            current_chunks.extend(
+                [
+                    env.robot.data.joint_pos[:, env.left_arm_full_ids],
+                    env.robot.data.joint_pos[:, env.right_arm_full_ids],
+                ]
+            )
+
+    if not target_chunks:
+        return torch.zeros(env.num_envs, device=env.device)
+
+    target = torch.cat(target_chunks, dim=1)
+    current = torch.cat(current_chunks, dim=1)
+    err = torch.sum(torch.square(current - target), dim=1)
+    return torch.exp(-err / std**2)
 
 
 # Periodic gait-based reward function
