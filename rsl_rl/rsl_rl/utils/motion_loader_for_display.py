@@ -153,8 +153,6 @@ class AMPLoaderDisplay:
         p = float(time) / self.trajectory_lens[traj_idx]
         n = self.trajectories[traj_idx].shape[0]
         idx_low, idx_high = int(np.floor(p * n)), int(np.ceil(p * n))
-        idx_low = max(0, min(idx_low, n - 1))
-        idx_high = max(0, min(idx_high, n - 1))
         frame_start = self.trajectories[traj_idx][idx_low]
         frame_end = self.trajectories[traj_idx][idx_high]
         blend = p * n - idx_low
@@ -165,9 +163,10 @@ class AMPLoaderDisplay:
         """Returns frame for the given trajectory at the specified time."""
         p = times / self.trajectory_lens[traj_idxs]
         n = self.trajectory_num_frames[traj_idxs]
-        idx_low, idx_high = np.floor(p * n).astype(np.int64), np.ceil(p * n).astype(np.int64)
-        idx_low = np.clip(idx_low, 0, n - 1)
-        idx_high = np.clip(idx_high, 0, n - 1)
+        idx_low, idx_high = np.floor(p * n).astype(int), np.ceil(p * n).astype(int)
+        n_minus_one = np.maximum(n - 1, 0)
+        idx_low = np.maximum(0, np.minimum(idx_low, n_minus_one))
+        idx_high = np.maximum(0, np.minimum(idx_high, n_minus_one))
         all_frame_starts = torch.zeros(len(traj_idxs), self.joint_vel_end_idx, device=self.device)
         all_frame_ends = torch.zeros(len(traj_idxs), self.joint_vel_end_idx, device=self.device)
         for traj_idx in set(traj_idxs):
@@ -183,8 +182,8 @@ class AMPLoaderDisplay:
         p = float(time) / self.trajectory_lens[traj_idx]
         n = self.trajectories_full[traj_idx].shape[0]
         idx_low, idx_high = int(np.floor(p * n)), int(np.ceil(p * n))
-        idx_low = max(0, min(idx_low, n - 1))
-        idx_high = max(0, min(idx_high, n - 1))
+        idx_low = min(idx_low, n - 1)
+        idx_high = min(idx_high, n - 1)
         frame_start = self.trajectories_full[traj_idx][idx_low]
         frame_end = self.trajectories_full[traj_idx][idx_high]
         blend = p * n - idx_low
@@ -193,9 +192,10 @@ class AMPLoaderDisplay:
     def get_full_frame_at_time_batch(self, traj_idxs, times):
         p = times / self.trajectory_lens[traj_idxs]
         n = self.trajectory_num_frames[traj_idxs]
-        idx_low, idx_high = np.floor(p * n).astype(np.int64), np.ceil(p * n).astype(np.int64)
-        idx_low = np.clip(idx_low, 0, n - 1)
-        idx_high = np.clip(idx_high, 0, n - 1)
+        idx_low, idx_high = np.floor(p * n).astype(int), np.ceil(p * n).astype(int)
+        n_minus_one = np.maximum(n - 1, 0)
+        idx_low = np.maximum(0, np.minimum(idx_low, n_minus_one))
+        idx_high = np.maximum(0, np.minimum(idx_high, n_minus_one))
         all_frame_amp_starts = torch.zeros(
             len(traj_idxs),
             self.joint_vel_end_idx - self.joint_pose_start_idx,
