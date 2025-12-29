@@ -280,8 +280,12 @@ class TienKungJabFlatEnvCfg:
         ),
         action_delay=ActionDelayCfg(enable=False, params={"max_delay": 5, "min_delay": 0}),
     )
-    #sim: SimCfg = SimCfg(dt=0.005, decimation=4, physx=PhysxCfg(gpu_max_rigid_patch_count=10 * 2**15))
-    sim: SimCfg = SimCfg(dt=0.0125, decimation=4, physx=PhysxCfg(gpu_max_rigid_patch_count=10 * 2**15))
+
+    # Origin HZ version (HZ = 1/(dt*decimation) = 1/0.02 = 50)
+    sim: SimCfg = SimCfg(dt=0.005, decimation=4, physx=PhysxCfg(gpu_max_rigid_patch_count=10 * 2**15))
+    
+    # Edit Lower HZ version ((HZ = 1/0.05 = 20))
+    # sim: SimCfg = SimCfg(dt=0.0125, decimation=4, physx=PhysxCfg(gpu_max_rigid_patch_count=10 * 2**15))
 
 
 @configclass
