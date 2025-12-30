@@ -484,9 +484,9 @@ class TienKungEnv(VecEnv):
                 ang_vel * self.obs_scales.ang_vel,  # 3
                 projected_gravity * self.obs_scales.projected_gravity,  # 3
                 command * self.obs_scales.commands,  # 3
-                joint_pos * self.obs_scales.joint_pos,  # 20
-                joint_vel * self.obs_scales.joint_vel,  # 20
-                action * self.obs_scales.actions,  # 20
+                joint_pos * self.obs_scales.joint_pos,  # 30
+                joint_vel * self.obs_scales.joint_vel,  # 30
+                action * self.obs_scales.actions,  # 30
                 torch.sin(2 * torch.pi * self.gait_phase),  # 2
                 torch.cos(2 * torch.pi * self.gait_phase),  # 2
                 self.phase_ratio,  # 2
