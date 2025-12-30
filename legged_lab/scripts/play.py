@@ -33,6 +33,9 @@ parser = argparse.ArgumentParser(description="Train an RL agent with RSL-RL.")
 parser.add_argument("--task", type=str, default=None, help="Name of the task.")
 parser.add_argument("--num_envs", type=int, default=None, help="Number of environments to simulate.")
 parser.add_argument("--seed", type=int, default=None, help="Seed used for the environment")
+# --- Add new args ---------------------------------------------------------------------------------------------
+parser.add_argument("--checkpoint_path", type=str, default=None, help="Checkpoint path of the trained policy.")
+# --------------------------------------------------------------------------------------------------------------
 
 # append RSL-RL cli arguments
 cli_args.add_rsl_rl_args(parser)
@@ -59,6 +62,9 @@ def play():
     env_cfg: BaseEnvCfg  # noqa:F405
 
     env_class_name = args_cli.task
+    # --- add new args --------------------------------------
+    policy_checkpoint_path = args_cli.checkpoint_path
+    # -------------------------------------------------------
     env_cfg, agent_cfg = task_registry.get_cfgs(env_class_name)
 
     env_cfg.noise.add_noise = False
@@ -92,7 +98,14 @@ def play():
     log_root_path = os.path.join("logs", agent_cfg.experiment_name)
     log_root_path = os.path.abspath(log_root_path)
     print(f"[INFO] Loading experiment from directory: {log_root_path}")
-    resume_path = get_checkpoint_path(log_root_path, agent_cfg.load_run, agent_cfg.load_checkpoint)
+    
+    # --- Load a custom checkpoint path --------------------------------------------------------------------
+    if policy_checkpoint_path:
+        resume_path = log_root_path + "/" + policy_checkpoint_path
+    else:
+        resume_path = get_checkpoint_path(log_root_path, agent_cfg.load_run, agent_cfg.load_checkpoint)
+    print(f"[INFO] Checkpoint Path: {resume_path}")
+    # ------------------------------------------------------------------------------------------------------
     log_dir = os.path.dirname(resume_path)
 
     runner_class: OnPolicyRunner | AmpOnPolicyRunner = eval(agent_cfg.runner_class_name)
