@@ -1,4 +1,4 @@
-# TienKung-Lab: Direct IsaacLab Workflow for TienKung
+# CaiLab TienKung-Lab: Direct IsaacLab Workflow for TienKung
 
 [![IsaacSim](https://img.shields.io/badge/IsaacSim-4.5.0-silver.svg)](https://docs.omniverse.nvidia.com/isaacsim/latest/overview.html)
 [![Isaac Lab](https://img.shields.io/badge/IsaacLab-2.1.0-silver)](https://isaac-sim.github.io/IsaacLab)
@@ -27,6 +27,13 @@
 This framework is an RL-based locomotion control system designed for full-sized humanoid robots, TienKung. It integrates AMP-style rewards with periodic gait rewards, facilitating natural, stable, and efficient walking and running behaviors.
 
 The codebase is built on IsaacLab, supports Sim2Sim transfer to MuJoCo, and features a modular architecture for seamless customization and extension. Additionally, it incorporates ray-casting-based sensors for enhanced perception, enabling precise environmental interaction and obstacle avoidance. The framework has also been successfully validated on the real TienKung robot.
+
+This repository is maintained by CaiLab and includes CaiLab-focused extensions for training, export, and deployment on the 30-DoF TienKung Pro variant (expanded from the original 20-DoF setup).
+
+## CaiLab Highlights
+- 30-DoF TienKung Pro training setup and assets used by CaiLab experiments.
+- Export pipeline for deployment: TorchScript (`.pt`) -> ONNX (`.onnx`) -> OpenVINO IR (`.xml`/`.bin`).
+- Reproducible logs and configs aligned with CaiLab's internal workflows.
 
 ## TODO List
 - [x] Motion retargeting support 2025-09-27
@@ -146,6 +153,29 @@ Exported_policy/ contains pretrained policies provided by the project. When usin
 python legged_lab/scripts/sim2sim.py --task walk --policy Exported_policy/walk.pt --duration 100
 ```
 
+### Model Export (ONNX / OpenVINO)
+
+Export TorchScript policy to ONNX:
+
+```bash
+python legged_lab/scripts/export_onnx_from_pt.py \
+  --pt logs/jab/2025-12-23_23-51-50_jab/exported/policy.pt \
+  --input-shape 1,1050 \
+  --dynamic-batch
+```
+
+Convert ONNX to OpenVINO IR (`.xml`/`.bin`):
+
+```bash
+python legged_lab/scripts/export_openvino_from_onnx.py \
+  --onnx logs/jab/2025-12-23_23-51-50_jab/exported/policy.onnx \
+  --input-shape 1,1050
+```
+
+OpenVINO export requires `openvino` to be installed (e.g. `pip install openvino`).
+
+If your observation dimension differs (e.g., legacy 20-DoF experiments), adjust `--input-shape` accordingly.
+
 ### Sim2Real
 The results of the TienKung-Lab have been successfully verified on the real **TienKung** robot.
 
@@ -205,4 +235,3 @@ In some VsCode versions, the indexing of part of the extensions is missing. In t
 If you're interested in TienKung-Lab, welcome to join our WeChat group for discussions.
 
 <img src="./docs/qrcode.png" border=0 width=40%>
-
