@@ -164,8 +164,8 @@ class TienKungEasyFlatEnvCfg:
     amp_full_dof: bool = True
     device: str = "cuda:0"
     scene: BaseSceneCfg = BaseSceneCfg(
-        # max_episode_length_s=4.0,   # self.max_episode_length = np.ceil(self.max_episode_length_s / (self.cfg.sim.decimation * self.cfg.sim.dt)) = np.ceil(4.0 / (4.0 * 0.005)) = np.ceil(4.0 / 0.02) = 200
-        max_episode_length_s=1.0,   # self.max_episode_length = np.ceil(1.0 / 0.02) = 50
+        max_episode_length_s=4.0,   # self.max_episode_length = np.ceil(self.max_episode_length_s / (self.cfg.sim.decimation * self.cfg.sim.dt)) = np.ceil(4.0 / (4.0 * 0.005)) = np.ceil(4.0 / 0.02) = 200
+        # max_episode_length_s=1.0,   # self.max_episode_length = np.ceil(1.0 / 0.02) = 50
         num_envs=4096,
         env_spacing=2.5,
         robot=TIENKUNG_PRO_CFG,
