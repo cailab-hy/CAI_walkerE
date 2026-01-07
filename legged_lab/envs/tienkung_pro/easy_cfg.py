@@ -74,7 +74,8 @@ class EasyRewardCfg:
         func=mdp.undesired_contacts,
         weight=-1.0,
         params={
-            "sensor_cfg": SceneEntityCfg("contact_sensor", body_names=["knee_pitch.*", "pelvis"]),
+            # "sensor_cfg": SceneEntityCfg("contact_sensor", body_names=["knee_pitch.*", "pelvis"]),
+            "sensor_cfg": SceneEntityCfg("contact_sensor", body_names=["head_roll.*", "body_yaw.*", "hip_yaw.*", "knee_pitch.*", "shoulder_roll.*", "elbow_pitch.*", "pelvis"]),
             "threshold": 1.0,
         },
     )
@@ -155,7 +156,6 @@ class EasyRewardCfg:
     hip_yaw_action = RewTerm(func=mdp.hip_yaw_action, weight=-0.05)
     feet_y_distance = RewTerm(func=mdp.feet_y_distance, weight=-0.5)
 
-
 @configclass
 class TienKungEasyFlatEnvCfg:
     amp_motion_files_display = [
@@ -164,8 +164,8 @@ class TienKungEasyFlatEnvCfg:
     amp_full_dof: bool = True
     device: str = "cuda:0"
     scene: BaseSceneCfg = BaseSceneCfg(
-        # max_episode_length_s=4.0,   # self.max_episode_length = np.ceil(self.max_episode_length_s / (self.cfg.sim.decimation * self.cfg.sim.dt)) = np.ceil(4.0 / (4.0 * 0.005)) = np.ceil(4.0 / 0.02) = 200
-        max_episode_length_s=1.0,   # self.max_episode_length = np.ceil(1.0 / 0.02) = 50
+        max_episode_length_s=4.0,   # self.max_episode_length = np.ceil(self.max_episode_length_s / (self.cfg.sim.decimation * self.cfg.sim.dt)) = np.ceil(4.0 / (4.0 * 0.005)) = np.ceil(4.0 / 0.02) = 200
+        # max_episode_length_s=1.0,   # self.max_episode_length = np.ceil(1.0 / 0.02) = 50
         num_envs=4096,
         env_spacing=2.5,
         robot=TIENKUNG_PRO_CFG,
@@ -185,7 +185,8 @@ class TienKungEasyFlatEnvCfg:
         actor_obs_history_length=10,
         critic_obs_history_length=10,
         action_scale=0.25,
-        terminate_contacts_body_names=["knee_pitch.*", "pelvis"],
+        # terminate_contacts_body_names=["knee_pitch.*", "pelvis"],
+        terminate_contacts_body_names=["head_roll.*", "body_yaw.*", "hip_yaw.*", "knee_pitch.*", "shoulder_roll.*", "elbow_pitch.*", "pelvis"],
         feet_body_names=["ankle_roll.*"],
     )
     reward = EasyRewardCfg()
