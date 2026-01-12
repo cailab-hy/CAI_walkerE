@@ -60,6 +60,7 @@
 
       <geom type="mesh" rgba="0.752941 0.752941 0.752941 1" mesh="pelvis"/>
       <geom pos="0.0499 -0.0358 -0.03194" quat="1 0 0 0" type="mesh" rgba="0.752941 0.752941 0.752941 1" mesh="imu_link"/>
+      <site name="imu" size="0.01" pos="0 0 0"/>
       <body name="hip_roll_l_link" pos="0 0.028 -0.0857">
         <inertial pos="-0.001848 0.055849 -0.036017" quat="0.242041 0.661501 0.270146 0.656394" mass="0.672983" diaginertia="0.0035288 0.00296741 0.00101678"/>
         <joint name="hip_roll_l_joint" pos="0 0 0" axis="1 0 0" range="-0.785398 0.785398" actuatorfrcrange="-235 235"/>
@@ -217,4 +218,108 @@
       </body>
     </body>
   </worldbody>
+  <actuator>
+    <position name="hip_roll_l_joint1" joint="hip_roll_l_joint" kp="700"/>
+    <position name="hip_pitch_l_joint1" joint="hip_pitch_l_joint" kp="700"/>
+    <position name="hip_yaw_l_joint1" joint="hip_yaw_l_joint" kp="500"/>
+    <position name="knee_pitch_l_joint1" joint="knee_pitch_l_joint" kp="700"/>
+    <position name="ankle_pitch_l_joint1" joint="ankle_pitch_l_joint" kp="30"/>
+    <position name="ankle_roll_l_joint1" joint="ankle_roll_l_joint" kp="16.8"/>
+
+    <position name="hip_roll_r_joint1" joint="hip_roll_r_joint" kp="700"/>
+    <position name="hip_pitch_r_joint1" joint="hip_pitch_r_joint" kp="700"/>
+    <position name="hip_yaw_r_joint1" joint="hip_yaw_r_joint" kp="500"/>
+    <position name="knee_pitch_r_joint1" joint="knee_pitch_r_joint" kp="700"/>
+    <position name="ankle_pitch_r_joint1" joint="ankle_pitch_r_joint" kp="30"/>
+    <position name="ankle_roll_r_joint1" joint="ankle_roll_r_joint" kp="16.8"/>
+
+    <position name="body_yaw_joint1" joint="body_yaw_joint" kp="20"/>
+    <position name="head_yaw_joint1" joint="head_yaw_joint" kp="10"/>
+    <position name="head_pitch_joint1" joint="head_pitch_joint" kp="10"/>
+    <position name="head_roll_joint1" joint="head_roll_joint" kp="10"/>
+
+    <position name="shoulder_pitch_l_joint1" joint="shoulder_pitch_l_joint" kp="60"/>
+    <position name="shoulder_roll_l_joint1" joint="shoulder_roll_l_joint" kp="20"/>
+    <position name="shoulder_yaw_l_joint1" joint="shoulder_yaw_l_joint" kp="10"/>
+    <position name="elbow_pitch_l_joint1" joint="elbow_pitch_l_joint" kp="10"/>
+    <position name="elbow_yaw_l_joint1" joint="elbow_yaw_l_joint" kp="15"/>
+    <position name="wrist_pitch_l_joint1" joint="wrist_pitch_l_joint" kp="8"/>
+    <position name="wrist_roll_l_joint1" joint="wrist_roll_l_joint" kp="8"/>
+
+    <position name="shoulder_pitch_r_joint1" joint="shoulder_pitch_r_joint" kp="60"/>
+    <position name="shoulder_roll_r_joint1" joint="shoulder_roll_r_joint" kp="20"/>
+    <position name="shoulder_yaw_r_joint1" joint="shoulder_yaw_r_joint" kp="10"/>
+    <position name="elbow_pitch_r_joint1" joint="elbow_pitch_r_joint" kp="10"/>
+    <position name="elbow_yaw_r_joint1" joint="elbow_yaw_r_joint" kp="15"/>
+    <position name="wrist_pitch_r_joint1" joint="wrist_pitch_r_joint" kp="8"/>
+    <position name="wrist_roll_r_joint1" joint="wrist_roll_r_joint" kp="8"/>
+  </actuator>
+  <sensor>
+    <jointpos joint="hip_roll_l_joint" user="6"/>
+    <jointpos joint="hip_pitch_l_joint" user="6"/>
+    <jointpos joint="hip_yaw_l_joint" user="6"/>
+    <jointpos joint="knee_pitch_l_joint" user="6"/>
+    <jointpos joint="ankle_pitch_l_joint" user="6"/>
+    <jointpos joint="ankle_roll_l_joint" user="6"/>
+    <jointpos joint="hip_roll_r_joint" user="6"/>
+    <jointpos joint="hip_pitch_r_joint" user="6"/>
+    <jointpos joint="hip_yaw_r_joint" user="6"/>
+    <jointpos joint="knee_pitch_r_joint" user="6"/>
+    <jointpos joint="ankle_pitch_r_joint" user="6"/>
+    <jointpos joint="ankle_roll_r_joint" user="6"/>
+    <jointpos joint="body_yaw_joint" user="6"/>
+    <jointpos joint="head_yaw_joint" user="6"/>
+    <jointpos joint="head_pitch_joint" user="6"/>
+    <jointpos joint="head_roll_joint" user="6"/>
+    <jointpos joint="shoulder_pitch_l_joint" user="6"/>
+    <jointpos joint="shoulder_roll_l_joint" user="6"/>
+    <jointpos joint="shoulder_yaw_l_joint" user="6"/>
+    <jointpos joint="elbow_pitch_l_joint" user="6"/>
+    <jointpos joint="elbow_yaw_l_joint" user="6"/>
+    <jointpos joint="wrist_pitch_l_joint" user="6"/>
+    <jointpos joint="wrist_roll_l_joint" user="6"/>
+    <jointpos joint="shoulder_pitch_r_joint" user="6"/>
+    <jointpos joint="shoulder_roll_r_joint" user="6"/>
+    <jointpos joint="shoulder_yaw_r_joint" user="6"/>
+    <jointpos joint="elbow_pitch_r_joint" user="6"/>
+    <jointpos joint="elbow_yaw_r_joint" user="6"/>
+    <jointpos joint="wrist_pitch_r_joint" user="6"/>
+    <jointpos joint="wrist_roll_r_joint" user="6"/>
+
+    <jointvel joint="hip_roll_l_joint" user="6"/>
+    <jointvel joint="hip_pitch_l_joint" user="6"/>
+    <jointvel joint="hip_yaw_l_joint" user="6"/>
+    <jointvel joint="knee_pitch_l_joint" user="6"/>
+    <jointvel joint="ankle_pitch_l_joint" user="6"/>
+    <jointvel joint="ankle_roll_l_joint" user="6"/>
+    <jointvel joint="hip_roll_r_joint" user="6"/>
+    <jointvel joint="hip_pitch_r_joint" user="6"/>
+    <jointvel joint="hip_yaw_r_joint" user="6"/>
+    <jointvel joint="knee_pitch_r_joint" user="6"/>
+    <jointvel joint="ankle_pitch_r_joint" user="6"/>
+    <jointvel joint="ankle_roll_r_joint" user="6"/>
+    <jointvel joint="body_yaw_joint" user="6"/>
+    <jointvel joint="head_yaw_joint" user="6"/>
+    <jointvel joint="head_pitch_joint" user="6"/>
+    <jointvel joint="head_roll_joint" user="6"/>
+    <jointvel joint="shoulder_pitch_l_joint" user="6"/>
+    <jointvel joint="shoulder_roll_l_joint" user="6"/>
+    <jointvel joint="shoulder_yaw_l_joint" user="6"/>
+    <jointvel joint="elbow_pitch_l_joint" user="6"/>
+    <jointvel joint="elbow_yaw_l_joint" user="6"/>
+    <jointvel joint="wrist_pitch_l_joint" user="6"/>
+    <jointvel joint="wrist_roll_l_joint" user="6"/>
+    <jointvel joint="shoulder_pitch_r_joint" user="6"/>
+    <jointvel joint="shoulder_roll_r_joint" user="6"/>
+    <jointvel joint="shoulder_yaw_r_joint" user="6"/>
+    <jointvel joint="elbow_pitch_r_joint" user="6"/>
+    <jointvel joint="elbow_yaw_r_joint" user="6"/>
+    <jointvel joint="wrist_pitch_r_joint" user="6"/>
+    <jointvel joint="wrist_roll_r_joint" user="6"/>
+
+    <framequat name="orientation" objtype="site" noise="0.001" objname="imu"/>
+    <framepos name="position" objtype="site" noise="0.001" objname="imu"/>
+    <gyro name="angular-velocity" site="imu" noise="0.005" cutoff="34.9"/>
+    <velocimeter name="linear-velocity" site="imu" noise="0.001" cutoff="30"/>
+  </sensor>
 </mujoco>
