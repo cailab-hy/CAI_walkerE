@@ -52,7 +52,7 @@
   <worldbody>
     <light directional="true" diffuse=".4 .4 .4" specular="0.1 0.1 0.1" pos="0 0 5.0" dir="0 0 -1" castshadow="false" />
     <light directional="true" diffuse=".6 .6 .6" specular="0.2 0.2 0.2" pos="0 0 4" dir="0 0 -1" />
-    <geom name="floor" pos="0 0 0" size="100 100 1" type="plane" material="matplane" margin="0.001" contype="1" conaffinity="15" friction="1 0.005 0.0001" />
+    <geom name="floor" pos="0 0 -0.01" size="100 100 1" type="plane" material="matplane" margin="0.001" contype="1" conaffinity="15" friction="1 0.005 0.0001" />
 
     <body name="Base_link" pos="0 0 1.0">
       <freejoint name="root" />
@@ -219,40 +219,41 @@
     </body>
   </worldbody>
   <actuator>
-    <position name="hip_roll_l_joint1" joint="hip_roll_l_joint" kp="700"/>
-    <position name="hip_pitch_l_joint1" joint="hip_pitch_l_joint" kp="700"/>
-    <position name="hip_yaw_l_joint1" joint="hip_yaw_l_joint" kp="500"/>
-    <position name="knee_pitch_l_joint1" joint="knee_pitch_l_joint" kp="700"/>
-    <position name="ankle_pitch_l_joint1" joint="ankle_pitch_l_joint" kp="30"/>
-    <position name="ankle_roll_l_joint1" joint="ankle_roll_l_joint" kp="16.8"/>
+    <position name="hip_roll_l_joint1" joint="hip_roll_l_joint" kp="700"      kv='10'/>
+    <position name="hip_pitch_l_joint1" joint="hip_pitch_l_joint" kp="700"    kv='10'/>
+    <position name="hip_yaw_l_joint1" joint="hip_yaw_l_joint" kp="500"        kv='5.'/>
+    <position name="knee_pitch_l_joint1" joint="knee_pitch_l_joint" kp="700"  kv='10'/>
+    <position name="ankle_pitch_l_joint1" joint="ankle_pitch_l_joint" kp="30" kv='2.5'/>
+    <position name="ankle_roll_l_joint1" joint="ankle_roll_l_joint" kp="16.8" kv='1.4'/>
 
-    <position name="hip_roll_r_joint1" joint="hip_roll_r_joint" kp="700"/>
-    <position name="hip_pitch_r_joint1" joint="hip_pitch_r_joint" kp="700"/>
-    <position name="hip_yaw_r_joint1" joint="hip_yaw_r_joint" kp="500"/>
-    <position name="knee_pitch_r_joint1" joint="knee_pitch_r_joint" kp="700"/>
-    <position name="ankle_pitch_r_joint1" joint="ankle_pitch_r_joint" kp="30"/>
-    <position name="ankle_roll_r_joint1" joint="ankle_roll_r_joint" kp="16.8"/>
+    <position name="hip_roll_r_joint1" joint="hip_roll_r_joint" kp="700" kv='10'/>
+    <position name="hip_pitch_r_joint1" joint="hip_pitch_r_joint" kp="700" kv='10'/>
+    <position name="hip_yaw_r_joint1" joint="hip_yaw_r_joint" kp="500"  kv='5.'/>
+    <position name="knee_pitch_r_joint1" joint="knee_pitch_r_joint" kp="700" kv='10'/>
+    <position name="ankle_pitch_r_joint1" joint="ankle_pitch_r_joint" kp="30" kv='2.5'/>
+    <position name="ankle_roll_r_joint1" joint="ankle_roll_r_joint" kp="16.8" kv='1.4'/>
 
-    <position name="body_yaw_joint1" joint="body_yaw_joint" kp="20"/>
-    <position name="head_yaw_joint1" joint="head_yaw_joint" kp="10"/>
-    <position name="head_pitch_joint1" joint="head_pitch_joint" kp="10"/>
-    <position name="head_roll_joint1" joint="head_roll_joint" kp="10"/>
+    <position name="body_yaw_joint1" joint="body_yaw_joint" kp="20" kv='1.0'/>
+    <position name="head_yaw_joint1" joint="head_yaw_joint" kp="10"  kv='0.5'/>
+    <position name="head_pitch_joint1" joint="head_pitch_joint" kp="10"  kv='0.5'/>
+    <position name="head_roll_joint1" joint="head_roll_joint" kp="10" kv='0.5'/>
 
-    <position name="shoulder_pitch_l_joint1" joint="shoulder_pitch_l_joint" kp="60"/>
-    <position name="shoulder_roll_l_joint1" joint="shoulder_roll_l_joint" kp="20"/>
-    <position name="shoulder_yaw_l_joint1" joint="shoulder_yaw_l_joint" kp="10"/>
-    <position name="elbow_pitch_l_joint1" joint="elbow_pitch_l_joint" kp="10"/>
-    <position name="elbow_yaw_l_joint1" joint="elbow_yaw_l_joint" kp="15"/>
-    <position name="wrist_pitch_l_joint1" joint="wrist_pitch_l_joint" kp="8"/>
-    <position name="wrist_roll_l_joint1" joint="wrist_roll_l_joint" kp="8"/>
+    <position name="shoulder_pitch_l_joint1" joint="shoulder_pitch_l_joint" kp="60" kv='3.'/>
+    <position name="shoulder_roll_l_joint1" joint="shoulder_roll_l_joint" kp="20" kv='1.5'/>
+    <position name="shoulder_yaw_l_joint1" joint="shoulder_yaw_l_joint" kp="10" kv='1.'/>
+    <position name="elbow_pitch_l_joint1" joint="elbow_pitch_l_joint" kp="10" kv='1.'/>
+    <position name="elbow_yaw_l_joint1" joint="elbow_yaw_l_joint" kp="15" kv='1.0'/>
+    <position name="wrist_pitch_l_joint1" joint="wrist_pitch_l_joint" kp="8" kv='0.5'/>
+    <position name="wrist_roll_l_joint1" joint="wrist_roll_l_joint" kp="8" kv='0.5'/>
 
-    <position name="shoulder_pitch_r_joint1" joint="shoulder_pitch_r_joint" kp="60"/>
-    <position name="shoulder_roll_r_joint1" joint="shoulder_roll_r_joint" kp="20"/>
-    <position name="shoulder_yaw_r_joint1" joint="shoulder_yaw_r_joint" kp="10"/>
-    <position name="elbow_pitch_r_joint1" joint="elbow_pitch_r_joint" kp="10"/>
-    <position name="elbow_yaw_r_joint1" joint="elbow_yaw_r_joint" kp="15"/>
-    <position name="wrist_pitch_r_joint1" joint="wrist_pitch_r_joint" kp="8"/>
-    <position name="wrist_roll_r_joint1" joint="wrist_roll_r_joint" kp="8"/>
+    <position name="shoulder_pitch_r_joint1" joint="shoulder_pitch_r_joint" kp="60" kv='3.'/>
+    <position name="shoulder_roll_r_joint1" joint="shoulder_roll_r_joint" kp="20" kv='1.5'/>
+    <position name="shoulder_yaw_r_joint1" joint="shoulder_yaw_r_joint" kp="10" kv='1.'/>
+    <position name="elbow_pitch_r_joint1" joint="elbow_pitch_r_joint" kp="10" kv='1.'/>
+    <position name="elbow_yaw_r_joint1" joint="elbow_yaw_r_joint" kp="15" kv='1.0'/>
+    <position name="wrist_pitch_r_joint1" joint="wrist_pitch_r_joint" kp="8" kv='0.5'/>
+    <position name="wrist_roll_r_joint1" joint="wrist_roll_r_joint" kp="8" kv='0.5'/>
+
   </actuator>
   <sensor>
     <jointpos joint="hip_roll_l_joint" user="6"/>

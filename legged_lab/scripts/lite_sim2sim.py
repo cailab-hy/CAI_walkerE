@@ -25,7 +25,7 @@ import mujoco_viewer
 import numpy as np
 import torch
 from pynput import keyboard
-import time, copy
+import time
 
 class SimToSimCfg:
     """Configuration class for sim2sim parameters.
@@ -35,8 +35,8 @@ class SimToSimCfg:
 
     class sim:
         sim_duration = 100.0
-        num_action = 30
-        num_obs_per_step = 105
+        num_action = 20
+        num_obs_per_step = 75
         actor_obs_history_length = 10
         dt = 0.005
         decimation = 4
@@ -81,23 +81,61 @@ class MujocoRunner:
         self.dof_pos = np.zeros(self.cfg.sim.num_action)
         self.dof_vel = np.zeros(self.cfg.sim.num_action)
         self.action = np.zeros(self.cfg.sim.num_action)
-        self.default_dof_pos = [0.0, -0.5, 0.0, 1.0, -0.5, 0.0,          
-              0.0, -0.5, 0.0, 1.0, -0.5, 0.0,           
-              0.0, 0.0, 0.0, 0.0,                       
-              0.0, 0.1, 0.0, -0.3, 0.0, 0.0, 0.0,      
-              0.0, -0.1, -0.0, -0.3, 0.0, 0.0, 0.0]
+        self.default_dof_pos = np.array(
+            [0, -0.5, 0, 1.0, -0.5, 0, 0, -0.5, 0, 1.0, -0.5, 0, 0, 0.1, 0.0, -0.3, 0, -0.1, 0.0, -0.3]
+        )
         self.episode_length_buf = 0
         self.gait_phase = np.zeros(2)
         self.gait_cycle = self.cfg.robot.gait_cycle
         self.phase_ratio = np.array([self.cfg.robot.gait_air_ratio_l, self.cfg.robot.gait_air_ratio_r])
         self.phase_offset = np.array([self.cfg.robot.gait_phase_offset_l, self.cfg.robot.gait_phase_offset_r])
-        self.mujoco_to_isaac_idx = [12,  0, 6, 15, 16, 23, 1, 7, 14, 17,
-                                    24, 2, 8, 13, 18, 25, 3, 9, 19, 26,
-                                    4, 10, 20, 27, 5, 11, 21, 28, 22, 29]
-        self.isaac_to_mujoco_idx = [1, 6, 11, 16, 20, 24, 2, 7, 12, 17,
-                                    21, 25, 0, 3, 8, 15, 4, 9, 14, 18, 
-                                    22, 26, 28, 5, 10, 13, 19, 23, 27, 29]
+
+        self.mujoco_to_isaac_idx = [
+            0,  # hip_roll_l_joint
+            6,  # hip_roll_r_joint
+            12,  # shoulder_pitch_l_joint
+            16,  # shoulder_pitch_r_joint
+            1,  # hip_pitch_l_joint
+            7,  # hip_pitch_r_joint
+            13,  # shoulder_roll_l_joint
+            17,  # shoulder_roll_r_joint
+            2,  # hip_yaw_l_joint
+            8,  # hip_yaw_r_joint
+            14,  # shoulder_yaw_l_joint
+            18,  # shoulder_yaw_r_joint
+            3,  # knee_pitch_l_joint
+            9,  # knee_pitch_r_joint
+            15,  # elbow_pitch_l_joint
+            19,  # elbow_pitch_r_joint
+            4,  # ankle_pitch_l_joint
+            10,  # ankle_pitch_r_joint
+            5,  # ankle_roll_l_joint
+            11,  # ankle_roll_r_joint
+        ]
+        self.isaac_to_mujoco_idx = [
+            0,  # hip_roll_l_joint
+            4,  # hip_pitch_l_joint
+            8,  # hip_yaw_l_joint
+            12,  # knee_pitch_l_joint
+            16,  # ankle_pitch_l_joint
+            18,  # ankle_roll_l_joint
+            1,  # hip_roll_r_joint
+            5,  # hip_pitch_r_joint
+            9,  # hip_yaw_r_joint
+            13,  # knee_pitch_r_joint
+            17,  # ankle_pitch_r_joint
+            19,  # ankle_roll_r_joint
+            2,  # shoulder_pitch_l_joint
+            6,  # shoulder_roll_l_joint
+            10,  # shoulder_yaw_l_joint
+            14,  # elbow_pitch_l_joint
+            3,  # shoulder_pitch_r_joint
+            7,  # shoulder_roll_r_joint
+            11,  # shoulder_yaw_r_joint
+            15,  # elbow_pitch_r_joint
+        ]
         # Initial command vel
+        self.command_vel = np.array([0.0, 0.0, 0.0])
         self.obs_history = np.zeros(
             (self.cfg.sim.num_obs_per_step * self.cfg.sim.actor_obs_history_length,), dtype=np.float32
         )
@@ -109,22 +147,26 @@ class MujocoRunner:
         Returns:
             np.ndarray: Normalized and clipped observation history.
         """
+        self.dof_pos = self.data.sensordata[0:20]
+        self.dof_vel = self.data.sensordata[20:40]
+
         obs = np.concatenate(
             [
                 self.data.sensor("angular-velocity").data.astype(np.double),  # 3
                 self.quat_rotate_inverse(
                     self.data.sensor("orientation").data[[1, 2, 3, 0]].astype(np.double), np.array([0, 0, -1])
                 ),  # 3
-                np.array([0.0, 0.0, 0.0]),  # 3
+                self.command_vel,  # 3
                 (self.dof_pos - self.default_dof_pos)[self.mujoco_to_isaac_idx],  # 20
                 self.dof_vel[self.mujoco_to_isaac_idx],  # 20
-                self.action,
+                np.clip(self.action, -self.cfg.sim.clip_actions, self.cfg.sim.clip_actions),  # 20
                 np.sin(2 * np.pi * self.gait_phase),  # 2
                 np.cos(2 * np.pi * self.gait_phase),  # 2
                 self.phase_ratio,  # 2
             ],
             axis=0,
         ).astype(np.float32)
+
         # Update observation history
         self.obs_history = np.roll(self.obs_history, shift=-self.cfg.sim.num_obs_per_step)
         self.obs_history[-self.cfg.sim.num_obs_per_step :] = obs.copy()
@@ -150,14 +192,16 @@ class MujocoRunner:
 
         while self.data.time < self.cfg.sim.sim_duration:
             self.obs_history = self.get_obs()
-            self.action[:] = self.policy(torch.tensor(self.obs_history, dtype=torch.float32)).detach().numpy()
+            self.action[:] = self.policy(torch.tensor(self.obs_history, dtype=torch.float32)).detach().numpy()[:20]
             self.action = np.clip(self.action, -self.cfg.sim.clip_actions, self.cfg.sim.clip_actions)
 
             for sim_update in range(self.cfg.sim.decimation):
                 step_start_time = time.time()
+
                 self.data.ctrl = self.position_control()
                 mujoco.mj_step(self.model, self.data)
                 self.viewer.render()
+
                 elapsed = time.time() - step_start_time
                 sleep_time = self.cfg.sim.dt - elapsed
                 if sleep_time > 0:
@@ -235,19 +279,30 @@ if __name__ == "__main__":
     LEGGED_LAB_ROOT_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
     parser = argparse.ArgumentParser(description="Run sim2sim Mujoco controller.")
     parser.add_argument(
+        "--task",
+        type=str,
+        default="walk",
+        choices=["walk", "run"],
+        help="Task type: 'walk' or 'run' to set gait parameters",
+    )
+    parser.add_argument(
         "--policy",
         type=str,
-        default='/home/cai/Downloads/policy.pt',
+        default=None,
         help="Path to policy.pt. If not specified, it will be set automatically based on --task",
     )
     parser.add_argument(
         "--model",
         type=str,
-        default=os.path.join(LEGGED_LAB_ROOT_DIR, "legged_lab/assets/tienkung_pro/mjcf/tiangong2.0_pro.xml"),
+        default=os.path.join(LEGGED_LAB_ROOT_DIR, "legged_lab/assets/tienkung2_lite/mjcf/tienkung.xml"),
         help="Path to model.xml",
     )
     parser.add_argument("--duration", type=float, default=100.0, help="Simulation duration in seconds")
     args = parser.parse_args()
+
+    if args.policy is None:
+        args.policy = os.path.join(LEGGED_LAB_ROOT_DIR, "Exported_policy", f"{args.task}.pt")
+
     if not os.path.isfile(args.policy):
         print(f"[ERROR] Policy file not found: {args.policy}")
         sys.exit(1)
@@ -255,6 +310,7 @@ if __name__ == "__main__":
         print(f"[ERROR] MuJoCo model file not found: {args.model}")
         sys.exit(1)
 
+    print(f"[INFO] Loaded task preset: {args.task.upper()}")
     print(f"[INFO] Loaded policy: {args.policy}")
     print(f"[INFO] Loaded model: {args.model}")
 
@@ -262,11 +318,18 @@ if __name__ == "__main__":
     sim_cfg.sim.sim_duration = args.duration
 
     # Set gait parameters according to task
-    sim_cfg.robot.gait_air_ratio_l = 0.38
-    sim_cfg.robot.gait_air_ratio_r = 0.38
-    sim_cfg.robot.gait_phase_offset_l = 0.38
-    sim_cfg.robot.gait_phase_offset_r = 0.88
-    sim_cfg.robot.gait_cycle = 0.85
+    if args.task == "walk":
+        sim_cfg.robot.gait_air_ratio_l = 0.38
+        sim_cfg.robot.gait_air_ratio_r = 0.38
+        sim_cfg.robot.gait_phase_offset_l = 0.38
+        sim_cfg.robot.gait_phase_offset_r = 0.88
+        sim_cfg.robot.gait_cycle = 0.85
+    elif args.task == "run":
+        sim_cfg.robot.gait_air_ratio_l = 0.6
+        sim_cfg.robot.gait_air_ratio_r = 0.6
+        sim_cfg.robot.gait_phase_offset_l = 0.6
+        sim_cfg.robot.gait_phase_offset_r = 0.1
+        sim_cfg.robot.gait_cycle = 0.5
 
     runner = MujocoRunner(
         cfg=sim_cfg,
