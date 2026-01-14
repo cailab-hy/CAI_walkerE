@@ -64,6 +64,8 @@ from legged_lab.envs.tienkung_pro.easy_cfg import TienKungEasyAgentCfg as TienKu
 from legged_lab.envs.tienkung_pro.easy_cfg import TienKungEasyFlatEnvCfg as TienKungProEasyFlatEnvCfg
 from legged_lab.envs.tienkung_pro.jab_cfg import TienKungJabAgentCfg as TienKungProJabAgentCfg
 from legged_lab.envs.tienkung_pro.jab_cfg import TienKungJabFlatEnvCfg as TienKungProJabFlatEnvCfg
+from legged_lab.envs.tienkung_pro.movebox_cfg import TienKungMoveBoxAgentCfg as TienKungProMoveBoxAgentCfg
+from legged_lab.envs.tienkung_pro.movebox_cfg import TienKungMoveBoxFlatEnvCfg as TienKungProMoveBoxFlatEnvCfg
 from legged_lab.envs.tienkung_pro.walk_cfg import TienKungWalkAgentCfg as TienKungProWalkAgentCfg
 from legged_lab.envs.tienkung_pro.walk_cfg import TienKungWalkFlatEnvCfg as TienKungProWalkFlatEnvCfg
 from legged_lab.envs.tienkung_pro.walk_with_sensor_cfg import (
@@ -107,6 +109,7 @@ task_registry.register("pro_walk", TienKungProEnv, TienKungProWalkFlatEnvCfg(), 
 task_registry.register("pro_run", TienKungProEnv, TienKungProRunFlatEnvCfg(), TienKungProRunAgentCfg())
 task_registry.register("pro_jab", TienKungProEnv, TienKungProJabFlatEnvCfg(), TienKungProJabAgentCfg())
 task_registry.register("pro_easy", TienKungProEnv, TienKungProEasyFlatEnvCfg(), TienKungProEasyAgentCfg())
+task_registry.register("pro_movebox", TienKungProEnv, TienKungProMoveBoxFlatEnvCfg(), TienKungProMoveBoxAgentCfg())
 task_registry.register(
     "pro_walk_with_sensor",
     TienKungProEnv,
