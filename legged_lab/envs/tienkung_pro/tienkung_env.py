@@ -133,6 +133,7 @@ class TienKungEnv(VecEnv):
         self.max_episode_length_s = self.cfg.scene.max_episode_length_s
         self.max_episode_length = np.ceil(self.max_episode_length_s / self.step_dt)
         self.num_actions = self.robot.data.default_joint_pos.shape[1]
+        # print(f"joint_names: {self.robot.data.joint_names}")
         self.clip_actions = self.cfg.normalization.clip_actions
         self.clip_obs = self.cfg.normalization.clip_observations
 
