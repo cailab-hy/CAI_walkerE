@@ -62,31 +62,31 @@ class GaitCfg:
 
 @configclass
 class EasyRewardCfg:
-    track_lin_vel_xy_exp = RewTerm(func=mdp.track_lin_vel_xy_yaw_frame_exp, weight=1.0, params={"std": 0.5})
-    track_ang_vel_z_exp = RewTerm(func=mdp.track_ang_vel_z_world_exp, weight=1.0, params={"std": 0.5})
-    lin_vel_z_l2 = RewTerm(func=mdp.lin_vel_z_l2, weight=-1.0)
-    ang_vel_xy_l2 = RewTerm(func=mdp.ang_vel_xy_l2, weight=-0.05)
+    # Jab keeps the base stable but prioritizes upper-body motion tracking via AMP.
+    track_lin_vel_xy_exp = RewTerm(func=mdp.track_lin_vel_xy_yaw_frame_exp, weight=0.1, params={"std": 0.25})
+    track_ang_vel_z_exp = RewTerm(func=mdp.track_ang_vel_z_world_exp, weight=0.05, params={"std": 0.5})
+    lin_vel_z_l2 = RewTerm(func=mdp.lin_vel_z_l2, weight=-0.2)
+    ang_vel_xy_l2 = RewTerm(func=mdp.ang_vel_xy_l2, weight=-0.02)
     energy = RewTerm(func=mdp.energy, weight=-1e-3)
-    dof_acc_l2 = RewTerm(func=mdp.joint_acc_l2, weight=-2.5e-7)
-    action_rate_l2 = RewTerm(func=mdp.action_rate_l2, weight=-0.01)
+    dof_acc_l2 = RewTerm(func=mdp.joint_acc_l2, weight=-1.0e-7)
+    action_rate_l2 = RewTerm(func=mdp.action_rate_l2, weight=-0.005)
     undesired_contacts = RewTerm(
         func=mdp.undesired_contacts,
         weight=-1.0,
         params={
-            "sensor_cfg": SceneEntityCfg(
-                "contact_sensor", body_names=["knee_pitch.*", "shoulder_roll.*", "elbow_pitch.*", "pelvis"]
-            ),
+            # "sensor_cfg": SceneEntityCfg("contact_sensor", body_names=["knee_pitch.*", "pelvis"]),
+            "sensor_cfg": SceneEntityCfg("contact_sensor", body_names=["head_roll.*", "body_yaw.*", "hip_yaw.*", "knee_pitch.*", "shoulder_roll.*", "elbow_pitch.*", "pelvis"]),
             "threshold": 1.0,
         },
     )
     body_orientation_l2 = RewTerm(
-        func=mdp.body_orientation_l2, params={"asset_cfg": SceneEntityCfg("robot", body_names="pelvis")}, weight=-2.0
+        func=mdp.body_orientation_l2, params={"asset_cfg": SceneEntityCfg("robot", body_names="pelvis")}, weight=-0.2
     )
-    flat_orientation_l2 = RewTerm(func=mdp.flat_orientation_l2, weight=-1.0)
-    termination_penalty = RewTerm(func=mdp.is_terminated, weight=-200.0)
+    flat_orientation_l2 = RewTerm(func=mdp.flat_orientation_l2, weight=-0.1)
+    termination_penalty = RewTerm(func=mdp.is_terminated, weight=-20.0)
     feet_slide = RewTerm(
         func=mdp.feet_slide,
-        weight=-0.25,
+        weight=-0.1,
         params={
             "sensor_cfg": SceneEntityCfg("contact_sensor", body_names="ankle_roll.*"),
             "asset_cfg": SceneEntityCfg("robot", body_names="ankle_roll.*"),
@@ -94,7 +94,7 @@ class EasyRewardCfg:
     )
     feet_force = RewTerm(
         func=mdp.body_force,
-        weight=-3e-3,
+        weight=-1e-3,
         params={
             "sensor_cfg": SceneEntityCfg("contact_sensor", body_names="ankle_roll.*"),
             "threshold": 500,
@@ -103,33 +103,31 @@ class EasyRewardCfg:
     )
     feet_too_near = RewTerm(
         func=mdp.feet_too_near_humanoid,
-        weight=-2.0,
+        weight=-1.0,
         params={"asset_cfg": SceneEntityCfg("robot", body_names=["ankle_roll.*"]), "threshold": 0.2},
     )
     feet_stumble = RewTerm(
         func=mdp.feet_stumble,
-        weight=-2.0,
+        weight=-1.0,
         params={"sensor_cfg": SceneEntityCfg("contact_sensor", body_names=["ankle_roll.*"])},
     )
-    dof_pos_limits = RewTerm(func=mdp.joint_pos_limits, weight=-2.0)
+    dof_pos_limits = RewTerm(func=mdp.joint_pos_limits, weight=-1.0)
     joint_deviation_hip = RewTerm(
         func=mdp.joint_deviation_l1,
-        weight=-0.15,
+        weight=-0.1,
         params={
             "asset_cfg": SceneEntityCfg(
                 "robot",
                 joint_names=[
                     "hip_yaw_.*_joint",
                     "hip_roll_.*_joint",
-                    "shoulder_pitch_.*_joint",
-                    "elbow_pitch_.*_joint",
                 ],
             )
         },
     )
     joint_deviation_arms = RewTerm(
         func=mdp.joint_deviation_l1,
-        weight=-0.2,
+        weight=-0.005,
         params={"asset_cfg": SceneEntityCfg("robot", joint_names=["shoulder_roll_.*_joint", "shoulder_yaw_.*_joint"])},
     )
     joint_deviation_legs = RewTerm(
@@ -147,16 +145,16 @@ class EasyRewardCfg:
             )
         },
     )
-
-    gait_feet_frc_perio = RewTerm(func=mdp.gait_feet_frc_perio, weight=1.0, params={"delta_t": 0.02})
-    gait_feet_spd_perio = RewTerm(func=mdp.gait_feet_spd_perio, weight=1.0, params={"delta_t": 0.02})
-    gait_feet_frc_support_perio = RewTerm(func=mdp.gait_feet_frc_support_perio, weight=0.6, params={"delta_t": 0.02})
-
-    ankle_torque = RewTerm(func=mdp.ankle_torque, weight=-0.0005)
-    ankle_action = RewTerm(func=mdp.ankle_action, weight=-0.001)
-    hip_roll_action = RewTerm(func=mdp.hip_roll_action, weight=-1.0)
-    hip_yaw_action = RewTerm(func=mdp.hip_yaw_action, weight=-1.0)
-    feet_y_distance = RewTerm(func=mdp.feet_y_distance, weight=-2.0)
+    upper_body_track = RewTerm(
+        func=mdp.track_upper_body_pose_from_amp,
+        weight=4.0,
+        params={"std": 0.4, "include_torso": True, "include_arms": True},
+    )
+    ankle_torque = RewTerm(func=mdp.ankle_torque, weight=-0.0002)
+    ankle_action = RewTerm(func=mdp.ankle_action, weight=-0.0005)
+    hip_roll_action = RewTerm(func=mdp.hip_roll_action, weight=-0.05)
+    hip_yaw_action = RewTerm(func=mdp.hip_yaw_action, weight=-0.05)
+    feet_y_distance = RewTerm(func=mdp.feet_y_distance, weight=-0.5)
 
 @configclass
 class TienKungEasyFlatEnvCfg:
@@ -338,9 +336,9 @@ class TienKungEasyAgentCfg(RslRlOnPolicyRunnerCfg):
     load_checkpoint = "model_.*.pt"
 
     # amp parameter
-    amp_reward_coef = 0.5           # Default: 0.3
+    amp_reward_coef = 0.3
     amp_motion_files = ["legged_lab/envs/tienkung_pro/datasets/motion_amp_expert/seunghwan_02_260105.txt"]
     amp_num_preload_transitions = 200000
-    amp_task_reward_lerp = 0.5      # Default: 0.7
+    amp_task_reward_lerp = 0.7
     amp_discr_hidden_dims = [1024, 512, 256]
     min_normalized_std = [0.05] * 20
