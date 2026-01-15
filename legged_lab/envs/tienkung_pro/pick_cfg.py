@@ -159,12 +159,12 @@ class EasyRewardCfg:
 @configclass
 class TienKungEasyFlatEnvCfg:
     amp_motion_files_display = [
-        "legged_lab/envs/tienkung_pro/datasets/motion_visualization/move_box_v3.txt"
+        "legged_lab/envs/tienkung_pro/datasets/motion_visualization/seunghwan_pick_2.txt"
     ]
     amp_full_dof: bool = True
     device: str = "cuda:0"
     scene: BaseSceneCfg = BaseSceneCfg(
-        max_episode_length_s=12.0,   # self.max_episode_length = np.ceil(self.max_episode_length_s / (self.cfg.sim.decimation * self.cfg.sim.dt)) = np.ceil(4.0 / (4.0 * 0.005)) = np.ceil(4.0 / 0.02) = 200
+        max_episode_length_s=4.0,   # self.max_episode_length = np.ceil(self.max_episode_length_s / (self.cfg.sim.decimation * self.cfg.sim.dt)) = np.ceil(4.0 / (4.0 * 0.005)) = np.ceil(4.0 / 0.02) = 200
         # max_episode_length_s=1.0,   # self.max_episode_length = np.ceil(1.0 / 0.02) = 50
         num_envs=4096,
         env_spacing=2.5,
@@ -337,7 +337,7 @@ class TienKungEasyAgentCfg(RslRlOnPolicyRunnerCfg):
 
     # amp parameter
     amp_reward_coef = 0.3
-    amp_motion_files = ["legged_lab/envs/tienkung_pro/datasets/motion_amp_expert/move_box_v3.txt"]
+    amp_motion_files = ["legged_lab/envs/tienkung_pro/datasets/motion_amp_expert/seunghwan_pick_2.txt"]
     amp_num_preload_transitions = 200000
     amp_task_reward_lerp = 0.7
     amp_discr_hidden_dims = [1024, 512, 256]
