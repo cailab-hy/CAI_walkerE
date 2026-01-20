@@ -62,6 +62,15 @@ class SceneCfg(InteractiveSceneCfg):
 
         self.robot: ArticulationCfg = config.robot.replace(prim_path="{ENV_REGEX_NS}/Robot")
 
+        # --- Rigid Box ------------------------------------------------
+        if config.bread_box is not None:
+            self.bread_box = config.bread_box
+        if config.support0 is not None:
+            self.support0 = config.support0
+        if config.support1 is not None:
+            self.support1 = config.support1
+        # ---------------------------------------------------------------
+
         self.contact_sensor = ContactSensorCfg(
             prim_path="{ENV_REGEX_NS}/Robot/.*", history_length=3, track_air_time=True, update_period=physics_dt
         )

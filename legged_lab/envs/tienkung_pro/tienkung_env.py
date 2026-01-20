@@ -32,8 +32,6 @@ from isaaclab.utils.buffers import CircularBuffer, DelayBuffer
 from isaaclab.utils.math import quat_apply, quat_conjugate, quat_rotate
 from scipy.spatial.transform import Rotation
 
-from legged_lab.envs.tienkung_pro.run_cfg import TienKungRunFlatEnvCfg
-from legged_lab.envs.tienkung_pro.run_with_sensor_cfg import TienKungRunWithSensorFlatEnvCfg
 from legged_lab.envs.tienkung_pro.walk_cfg import TienKungWalkFlatEnvCfg
 from legged_lab.envs.tienkung_pro.walk_with_sensor_cfg import (
     TienKungWalkWithSensorFlatEnvCfg,
@@ -47,18 +45,14 @@ class TienKungEnv(VecEnv):
     def __init__(
         self,
         cfg: (
-            TienKungRunFlatEnvCfg
-            | TienKungWalkFlatEnvCfg
+            TienKungWalkFlatEnvCfg
             | TienKungWalkWithSensorFlatEnvCfg
-            | TienKungRunWithSensorFlatEnvCfg
         ),
         headless,
     ):
         self.cfg: (
-            TienKungRunFlatEnvCfg
-            | TienKungWalkFlatEnvCfg
+            TienKungWalkFlatEnvCfg
             | TienKungWalkWithSensorFlatEnvCfg
-            | TienKungRunWithSensorFlatEnvCfg
         )
 
         self.cfg = cfg
@@ -343,7 +337,7 @@ class TienKungEnv(VecEnv):
         env_ids = torch.arange(self.num_envs, device=device)
 
         root_pos = visual_motion_frame[:3].clone()
-        root_pos[2] += 0.3
+        # root_pos[2] += 0.3
 
         euler = visual_motion_frame[3:6].cpu().numpy()
         quat_xyzw = Rotation.from_euler("XYZ", euler, degrees=False).as_quat()  # [x, y, z, w]

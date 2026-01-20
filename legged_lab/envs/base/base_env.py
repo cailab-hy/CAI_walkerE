@@ -21,6 +21,7 @@ import isaacsim.core.utils.torch as torch_utils  # type: ignore
 import numpy as np
 import torch
 from isaaclab.assets.articulation import Articulation
+from isaaclab.assets.rigid_object import RigidObject
 from isaaclab.envs.mdp.commands import UniformVelocityCommand, UniformVelocityCommandCfg
 from isaaclab.managers import EventManager, RewardManager
 from isaaclab.managers.scene_entity_cfg import SceneEntityCfg
@@ -65,6 +66,11 @@ class BaseEnv(VecEnv):
         self.sim.reset()
 
         self.robot: Articulation = self.scene["robot"]
+        # --- Rigid Box ---------------------------------------------------------
+        self.bread_box: RigidObject = self.scene["bread_box"]
+        self.support0: RigidObject = self.scene["support0"]
+        self.support1: RigidObject = self.scene["support1"]
+        # -----------------------------------------------------------------------
         self.contact_sensor: ContactSensor = self.scene.sensors["contact_sensor"]
         if self.cfg.scene.height_scanner.enable_height_scan:
             self.height_scanner: RayCaster = self.scene.sensors["height_scanner"]
@@ -157,6 +163,13 @@ class BaseEnv(VecEnv):
 
         root_lin_vel = robot.data.root_lin_vel_b
         feet_contact = torch.max(torch.norm(net_contact_forces[:, :, self.feet_cfg.body_ids], dim=-1), dim=1)[0] > 0.5
+        
+        # --- Rigid Box ---------------------------------------------------
+        bread_box = self.bread_box
+        bread_box_pos = bread_box.data.root_pos_w - self.scene.env_origins
+        bread_box_quat = bread_box.data.root_quat_w
+        # -----------------------------------------------------------------
+
         current_critic_obs = torch.cat(
             [current_actor_obs, root_lin_vel * self.obs_scales.lin_vel, feet_contact], dim=-1
         )

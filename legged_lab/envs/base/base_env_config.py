@@ -48,6 +48,11 @@ from .base_config import (
     RewardCfg,
     RobotCfg,
     SimCfg,
+    # --- Rigid Box ----------
+    BreadBoxCfg,
+    Support0Cfg,
+    Support1Cfg,
+    # ------------------------
 )
 
 
@@ -59,6 +64,11 @@ class BaseEnvCfg:
         num_envs=4096,
         env_spacing=2.5,
         robot=MISSING,
+        # --- Rigid Box ----------
+        bread_box=MISSING,
+        support0=MISSING,
+        support1=MISSING,
+        # ------------------------
         terrain_type=MISSING,
         terrain_generator=None,
         max_init_terrain_level=5,
@@ -78,6 +88,17 @@ class BaseEnvCfg:
         terminate_contacts_body_names=MISSING,
         feet_body_names=MISSING,
     )
+    # --- Rigid Box ------------------------------------------------
+    bread_box: BreadBoxCfg = BreadBoxCfg(
+        pos_randomize_range=0.03,
+    )
+    support0: Support0Cfg = Support0Cfg(
+        pos_randomize_range=0.03,
+    )
+    support1: Support1Cfg = Support1Cfg(
+        pos_randomize_range=0.03,
+    )
+    # --------------------------------------------------------------
     reward = RewardCfg()
     normalization: NormalizationCfg = NormalizationCfg(
         obs_scales=ObsScalesCfg(

@@ -19,7 +19,10 @@
 import math
 from dataclasses import MISSING
 
-from isaaclab.assets.articulation import ArticulationCfg
+# --- Rigid Box ----------------------------------------------------
+# from isaaclab.assets.articulation import ArticulationCfg
+from isaaclab.assets import ArticulationCfg, RigidObjectCfg
+# ------------------------------------------------------------------
 from isaaclab.managers import EventTermCfg as EventTerm
 from isaaclab.managers import SceneEntityCfg
 from isaaclab.terrains.terrain_generator_cfg import TerrainGeneratorCfg
@@ -51,6 +54,11 @@ class BaseSceneCfg:
     num_envs: int = 4096
     env_spacing: float = 2.5
     robot: ArticulationCfg = MISSING
+    # --- Rigid Box ------------------------------------------------
+    bread_box: RigidObjectCfg = MISSING
+    support0: RigidObjectCfg = MISSING 
+    support1: RigidObjectCfg = MISSING 
+    # --------------------------------------------------------------
     terrain_type: str = MISSING
     terrain_generator: TerrainGeneratorCfg = None
     max_init_terrain_level: int = 5
@@ -66,6 +74,20 @@ class RobotCfg:
     action_scale: float = 0.25
     terminate_contacts_body_names: list = []
     feet_body_names: list = []
+
+# --- Rigid Box ------------------------------------------------
+@configclass
+class BreadBoxCfg:
+    pos_randomize_range: float = 0.03  # 3cm in meters
+
+@configclass
+class Support0Cfg:
+    pos_randomize_range: float = 0.03  # 3cm in meters
+
+@configclass
+class Support1Cfg:
+    pos_randomize_range: float = 0.03  # 3cm in meters
+# --------------------------------------------------------------
 
 
 @configclass

@@ -31,7 +31,9 @@ from isaaclab_rl.rsl_rl import (  # noqa:F401
 )
 
 import legged_lab.mdp as mdp
-from legged_lab.assets.tienkung_pro import TIENKUNG_PRO_CFG
+# --- Rigid Box ---------------------------------------------------------------------------------------
+from legged_lab.assets.tienkung_pro import TIENKUNG_PRO_CFG, BREAD_BOX_CFG, SUPPORT0_CFG, SUPPORT1_CFG
+# -----------------------------------------------------------------------------------------------------
 from legged_lab.envs.base.base_config import (
     ActionDelayCfg,
     BaseSceneCfg,
@@ -47,6 +49,11 @@ from legged_lab.envs.base.base_config import (
     PhysxCfg,
     RobotCfg,
     SimCfg,
+    # --- Rigid Box ----------
+    BreadBoxCfg,
+    Support0Cfg,
+    Support1Cfg,
+    # ------------------------
 )
 from legged_lab.terrains import GRAVEL_TERRAINS_CFG, ROUGH_TERRAINS_CFG  # noqa:F401
 
@@ -61,32 +68,32 @@ class GaitCfg:
 
 
 @configclass
-class EasyRewardCfg:
-    # Jab keeps the base stable but prioritizes upper-body motion tracking via AMP.
-    track_lin_vel_xy_exp = RewTerm(func=mdp.track_lin_vel_xy_yaw_frame_exp, weight=0.1, params={"std": 0.25})
-    track_ang_vel_z_exp = RewTerm(func=mdp.track_ang_vel_z_world_exp, weight=0.05, params={"std": 0.5})
-    lin_vel_z_l2 = RewTerm(func=mdp.lin_vel_z_l2, weight=-0.2)
-    ang_vel_xy_l2 = RewTerm(func=mdp.ang_vel_xy_l2, weight=-0.02)
+class PickRewardCfg:
+    track_lin_vel_xy_exp = RewTerm(func=mdp.track_lin_vel_xy_yaw_frame_exp, weight=1.0, params={"std": 0.5})
+    track_ang_vel_z_exp = RewTerm(func=mdp.track_ang_vel_z_world_exp, weight=1.0, params={"std": 0.5})
+    lin_vel_z_l2 = RewTerm(func=mdp.lin_vel_z_l2, weight=-1.0)
+    ang_vel_xy_l2 = RewTerm(func=mdp.ang_vel_xy_l2, weight=-0.05)
     energy = RewTerm(func=mdp.energy, weight=-1e-3)
-    dof_acc_l2 = RewTerm(func=mdp.joint_acc_l2, weight=-1.0e-7)
-    action_rate_l2 = RewTerm(func=mdp.action_rate_l2, weight=-0.005)
+    dof_acc_l2 = RewTerm(func=mdp.joint_acc_l2, weight=-2.5e-7)
+    action_rate_l2 = RewTerm(func=mdp.action_rate_l2, weight=-0.01)
     undesired_contacts = RewTerm(
         func=mdp.undesired_contacts,
         weight=-1.0,
         params={
-            # "sensor_cfg": SceneEntityCfg("contact_sensor", body_names=["knee_pitch.*", "pelvis"]),
-            "sensor_cfg": SceneEntityCfg("contact_sensor", body_names=["head_roll.*", "body_yaw.*", "hip_yaw.*", "knee_pitch.*", "shoulder_roll.*", "elbow_pitch.*", "pelvis"]),
+            "sensor_cfg": SceneEntityCfg(
+                "contact_sensor", body_names=["knee_pitch.*", "shoulder_roll.*", "elbow_pitch.*", "pelvis"]
+            ),
             "threshold": 1.0,
         },
     )
     body_orientation_l2 = RewTerm(
-        func=mdp.body_orientation_l2, params={"asset_cfg": SceneEntityCfg("robot", body_names="pelvis")}, weight=-0.2
+        func=mdp.body_orientation_l2, params={"asset_cfg": SceneEntityCfg("robot", body_names="pelvis")}, weight=-2.0
     )
-    flat_orientation_l2 = RewTerm(func=mdp.flat_orientation_l2, weight=-0.1)
-    termination_penalty = RewTerm(func=mdp.is_terminated, weight=-20.0)
+    flat_orientation_l2 = RewTerm(func=mdp.flat_orientation_l2, weight=-1.0)
+    termination_penalty = RewTerm(func=mdp.is_terminated, weight=-200.0)
     feet_slide = RewTerm(
         func=mdp.feet_slide,
-        weight=-0.1,
+        weight=-0.25,
         params={
             "sensor_cfg": SceneEntityCfg("contact_sensor", body_names="ankle_roll.*"),
             "asset_cfg": SceneEntityCfg("robot", body_names="ankle_roll.*"),
@@ -94,7 +101,7 @@ class EasyRewardCfg:
     )
     feet_force = RewTerm(
         func=mdp.body_force,
-        weight=-1e-3,
+        weight=-3e-3,
         params={
             "sensor_cfg": SceneEntityCfg("contact_sensor", body_names="ankle_roll.*"),
             "threshold": 500,
@@ -103,31 +110,33 @@ class EasyRewardCfg:
     )
     feet_too_near = RewTerm(
         func=mdp.feet_too_near_humanoid,
-        weight=-1.0,
+        weight=-2.0,
         params={"asset_cfg": SceneEntityCfg("robot", body_names=["ankle_roll.*"]), "threshold": 0.2},
     )
     feet_stumble = RewTerm(
         func=mdp.feet_stumble,
-        weight=-1.0,
+        weight=-2.0,
         params={"sensor_cfg": SceneEntityCfg("contact_sensor", body_names=["ankle_roll.*"])},
     )
-    dof_pos_limits = RewTerm(func=mdp.joint_pos_limits, weight=-1.0)
+    dof_pos_limits = RewTerm(func=mdp.joint_pos_limits, weight=-2.0)
     joint_deviation_hip = RewTerm(
         func=mdp.joint_deviation_l1,
-        weight=-0.1,
+        weight=-0.15,
         params={
             "asset_cfg": SceneEntityCfg(
                 "robot",
                 joint_names=[
                     "hip_yaw_.*_joint",
                     "hip_roll_.*_joint",
+                    "shoulder_pitch_.*_joint",
+                    "elbow_pitch_.*_joint",
                 ],
             )
         },
     )
     joint_deviation_arms = RewTerm(
         func=mdp.joint_deviation_l1,
-        weight=-0.005,
+        weight=-0.2,
         params={"asset_cfg": SceneEntityCfg("robot", joint_names=["shoulder_roll_.*_joint", "shoulder_yaw_.*_joint"])},
     )
     joint_deviation_legs = RewTerm(
@@ -145,30 +154,78 @@ class EasyRewardCfg:
             )
         },
     )
-    upper_body_track = RewTerm(
-        func=mdp.track_upper_body_pose_from_amp,
-        weight=4.0,
-        params={"std": 0.4, "include_torso": True, "include_arms": True},
+
+    gait_feet_frc_perio = RewTerm(func=mdp.gait_feet_frc_perio, weight=1.0, params={"delta_t": 0.02})
+    gait_feet_spd_perio = RewTerm(func=mdp.gait_feet_spd_perio, weight=1.0, params={"delta_t": 0.02})
+    gait_feet_frc_support_perio = RewTerm(func=mdp.gait_feet_frc_support_perio, weight=0.6, params={"delta_t": 0.02})
+
+    ankle_torque = RewTerm(func=mdp.ankle_torque, weight=-0.0005)
+    ankle_action = RewTerm(func=mdp.ankle_action, weight=-0.001)
+    hip_roll_action = RewTerm(func=mdp.hip_roll_action, weight=-1.0)
+    hip_yaw_action = RewTerm(func=mdp.hip_yaw_action, weight=-1.0)
+    feet_y_distance = RewTerm(func=mdp.feet_y_distance, weight=-2.0)
+
+    # ===================== Pick and Place Task Rewards (4 Categories) =====================
+    
+    # Category 1: Reach to bread_box
+    hand_distance_to_bread_box = RewTerm(
+        func=mdp.hand_distance_to_bread_box,
+        weight=0.6,
+        params={"std": 0.3},
     )
-    ankle_torque = RewTerm(func=mdp.ankle_torque, weight=-0.0002)
-    ankle_action = RewTerm(func=mdp.ankle_action, weight=-0.0005)
-    hip_roll_action = RewTerm(func=mdp.hip_roll_action, weight=-0.05)
-    hip_yaw_action = RewTerm(func=mdp.hip_yaw_action, weight=-0.05)
-    feet_y_distance = RewTerm(func=mdp.feet_y_distance, weight=-0.5)
+    
+    # Category 2: Grasp & Lift bread_box
+    wrist_contact_with_bread_box = RewTerm(
+        func=mdp.wrist_contact_with_bread_box,
+        weight=1.0,
+        params={
+            "sensor_cfg": SceneEntityCfg("contact_sensor", body_names=["wrist_roll.*"]),
+            "contact_threshold": 1.0,
+        },
+    )
+    wrist_bread_box_contact_duration = RewTerm(
+        func=mdp.wrist_bread_box_contact_duration,
+        weight=0.8,
+        params={"wrist_contact_threshold": 1.0},
+    )
+    
+    # Category 3: Reach to support_1 (while holding bread_box)
+    bread_box_distance_to_support1 = RewTerm(
+        func=mdp.bread_box_distance_to_support1,
+        weight=0.7,
+        params={"std": 0.5},
+    )
+    
+    # Category 4: Place on support_1
+    bread_box_placement_on_support1 = RewTerm(
+        func=mdp.bread_box_placement_on_support1,
+        weight=2.5,
+        params={"xy_threshold": 0.15, "z_threshold": 0.05},
+    )
+    
+    task_completion_bonus = RewTerm(
+        func=mdp.task_completion_bonus,
+        weight=5.0,
+        params={"xy_threshold": 0.15, "z_threshold": 0.05},
+    )
+    
+    # ===================================================================================
 
 @configclass
-class TienKungEasyFlatEnvCfg:
+class TienKungPickFlatEnvCfg:
     amp_motion_files_display = [
-        "legged_lab/envs/tienkung_pro/datasets/motion_visualization/seunghwan_pick_2.txt"
+        "legged_lab/envs/tienkung_pro/datasets/motion_visualization/pick_and_place.txt"
     ]
     amp_full_dof: bool = True
     device: str = "cuda:0"
     scene: BaseSceneCfg = BaseSceneCfg(
         max_episode_length_s=4.0,   # self.max_episode_length = np.ceil(self.max_episode_length_s / (self.cfg.sim.decimation * self.cfg.sim.dt)) = np.ceil(4.0 / (4.0 * 0.005)) = np.ceil(4.0 / 0.02) = 200
-        # max_episode_length_s=1.0,   # self.max_episode_length = np.ceil(1.0 / 0.02) = 50
         num_envs=4096,
-        env_spacing=2.5,
+        env_spacing=5.0,            # 2.5,
         robot=TIENKUNG_PRO_CFG,
+        bread_box=BREAD_BOX_CFG,
+        support0=SUPPORT0_CFG, 
+        support1=SUPPORT1_CFG,
         terrain_type="plane",
         terrain_generator=None,
         max_init_terrain_level=5,
@@ -185,11 +242,21 @@ class TienKungEasyFlatEnvCfg:
         actor_obs_history_length=10,
         critic_obs_history_length=10,
         action_scale=0.25,
-        # terminate_contacts_body_names=["knee_pitch.*", "pelvis"],
         terminate_contacts_body_names=["head_roll.*", "body_yaw.*", "hip_yaw.*", "knee_pitch.*", "shoulder_roll.*", "elbow_pitch.*", "pelvis"],
         feet_body_names=["ankle_roll.*"],
     )
-    reward = EasyRewardCfg()
+    # --- Rigid Box ------------------------------------------------
+    bread_box: BreadBoxCfg = BreadBoxCfg(
+        pos_randomize_range=0.03,
+    )
+    support0: Support0Cfg = Support0Cfg(
+        pos_randomize_range=0.03,
+    )
+    support1: Support1Cfg = Support1Cfg(
+        pos_randomize_range=0.03,
+    )
+    # --------------------------------------------------------------
+    reward = PickRewardCfg()
     gait = GaitCfg()
     normalization: NormalizationCfg = NormalizationCfg(
         obs_scales=ObsScalesCfg(
@@ -286,12 +353,8 @@ class TienKungEasyFlatEnvCfg:
     # Origin HZ version (HZ = 1/(dt*decimation) = 1/0.02 = 50)
     sim: SimCfg = SimCfg(dt=0.005, decimation=4, physx=PhysxCfg(gpu_max_rigid_patch_count=10 * 2**15))
     
-    # Edit Lower HZ version ((HZ = 1/0.05 = 20))
-    # sim: SimCfg = SimCfg(dt=0.0125, decimation=4, physx=PhysxCfg(gpu_max_rigid_patch_count=10 * 2**15))
-
-
 @configclass
-class TienKungEasyAgentCfg(RslRlOnPolicyRunnerCfg):
+class TienKungPickAgentCfg(RslRlOnPolicyRunnerCfg):
     seed = 42
     device = "cuda:0"
     num_steps_per_env = 24
@@ -326,19 +389,19 @@ class TienKungEasyAgentCfg(RslRlOnPolicyRunnerCfg):
     clip_actions = None
     save_interval = 100
     runner_class_name = "AmpOnPolicyRunner"
-    experiment_name = "easy_motion"
+    experiment_name = "pick_and_place"
     run_name = ""
     logger = "tensorboard"
-    neptune_project = "easy_motion"
-    wandb_project = "easy_motion"
+    neptune_project = "pick_and_place"
+    wandb_project = "pick_and_place"
     resume = False
     load_run = ".*"
     load_checkpoint = "model_.*.pt"
 
     # amp parameter
-    amp_reward_coef = 0.3
-    amp_motion_files = ["legged_lab/envs/tienkung_pro/datasets/motion_amp_expert/seunghwan_pick_2.txt"]
+    amp_reward_coef = 0.5           # Default: 0.3
+    amp_motion_files = ["legged_lab/envs/tienkung_pro/datasets/motion_amp_expert/pick_and_place.txt"]
     amp_num_preload_transitions = 200000
-    amp_task_reward_lerp = 0.7
+    amp_task_reward_lerp = 0.5      # Default: 0.7
     amp_discr_hidden_dims = [1024, 512, 256]
     min_normalized_std = [0.05] * 20

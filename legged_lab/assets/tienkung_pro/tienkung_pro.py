@@ -6,12 +6,78 @@ the Pro model's joint names, limits, and gains.
 
 import isaaclab.sim as sim_utils
 from isaaclab.actuators import ImplicitActuatorCfg
-from isaaclab.assets.articulation import ArticulationCfg
+# --- Rigid Box ----------------------------------------------------
+# from isaaclab.assets.articulation import ArticulationCfg
+from isaaclab.assets import ArticulationCfg, RigidObjectCfg
+# ------------------------------------------------------------------
 
 from legged_lab.assets import ISAAC_ASSET_DIR
 
+# --- Rigid Box ----------------------------------------------------
+BREAD_BOX_CFG = RigidObjectCfg(
+    prim_path="/World/envs/env_.*/Bread_box",
+    spawn=sim_utils.UsdFileCfg(
+        usd_path=f"{ISAAC_ASSET_DIR}/objects/bread_box/bread_box.usd",
+        activate_contact_sensors=True,
+        mass_props=sim_utils.MassPropertiesCfg(
+            mass=3.0,
+        ),
+    ),
+    init_state=RigidObjectCfg.InitialStateCfg(
+        pos=(1.5, -0.15, 1.0),
+        rot=(1.0, 0.0, 0.0, 0.0),
+    ),
+)
+
+SUPPORT0_CFG = RigidObjectCfg(
+    prim_path="/World/envs/env_.*/Support0",
+    spawn=sim_utils.UsdFileCfg(
+        usd_path=f"{ISAAC_ASSET_DIR}/objects/support/support0.usd",
+        activate_contact_sensors=False,
+        mass_props=sim_utils.MassPropertiesCfg(
+            mass=0.5,
+        ),
+        rigid_props=sim_utils.RigidBodyPropertiesCfg(
+            rigid_body_enabled=True,
+            kinematic_enabled=True,
+        ),
+        collision_props=sim_utils.CollisionPropertiesCfg(
+            collision_enabled=True,
+        ),
+    ),
+    init_state=RigidObjectCfg.InitialStateCfg(
+        pos=(1.5, -0.15, 0.95),
+        rot=(1.0, 0.0, 0.0, 0.0),
+    ),
+)
+
+SUPPORT1_CFG = RigidObjectCfg(
+    prim_path="/World/envs/env_.*/Support1",
+    spawn=sim_utils.UsdFileCfg(
+        usd_path=f"{ISAAC_ASSET_DIR}/objects/support/support1.usd",
+        activate_contact_sensors=False,
+        mass_props=sim_utils.MassPropertiesCfg(
+            mass=0.5,
+        ),
+        rigid_props=sim_utils.RigidBodyPropertiesCfg(
+            rigid_body_enabled=True,
+            kinematic_enabled=True,
+        ),
+        collision_props=sim_utils.CollisionPropertiesCfg(
+            collision_enabled=True,
+        ),
+    ),
+    init_state=RigidObjectCfg.InitialStateCfg(
+        pos=(-1.5, -0.15, 0.95),
+        rot=(1.0, 0.0, 0.0, 0.0),
+    ),
+)
+# ------------------------------------------------------------------
 
 TIENKUNG_PRO_CFG = ArticulationCfg(
+    # --- Rigid Box ----------------------
+    prim_path="/World/envs/env_.*/Robot",
+    # ------------------------------------
     spawn=sim_utils.UsdFileCfg(
         usd_path=f"{ISAAC_ASSET_DIR}/tienkung_pro/usd/tiangong2.0_pro.usd",
         activate_contact_sensors=True,
