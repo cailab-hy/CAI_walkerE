@@ -163,10 +163,6 @@ class TienKungEnv(VecEnv):
         self.elbow_body_ids, _ = self.robot.find_bodies(
             name_keys=["elbow_pitch_l_link", "elbow_pitch_r_link"], preserve_order=True
         )
-        # Pick-and-place task: wrist/hand end-effector positions
-        self.wrist_roll_body_ids, _ = self.robot.find_bodies(
-            name_keys=["wrist_roll_l_link", "wrist_roll_r_link"], preserve_order=True
-        )
         self.left_leg_ids, _ = self.robot.find_joints(
             name_keys=[
                 "hip_roll_l_joint",
@@ -239,12 +235,6 @@ class TienKungEnv(VecEnv):
             name_keys=["ankle_pitch_l_joint", "ankle_pitch_r_joint", "ankle_roll_l_joint", "ankle_roll_r_joint"],
             preserve_order=True,
         )
-
-        # Pick-and-place task: object and target configs
-        self.bread_box_cfg = SceneEntityCfg(name="bread_box")
-        self.bread_box_cfg.resolve(self.scene)
-        self.support1_cfg = SceneEntityCfg(name="support1")
-        self.support1_cfg.resolve(self.scene)
 
         self.obs_scales = self.cfg.normalization.obs_scales
         self.add_noise = self.cfg.noise.add_noise
@@ -484,86 +474,6 @@ class TienKungEnv(VecEnv):
         root_lin_vel = robot.data.root_lin_vel_b
         feet_contact = torch.max(torch.norm(net_contact_forces[:, :, self.feet_cfg.body_ids], dim=-1), dim=1)[0] > 0.5
 
-        # ==============================================================================================
-        # Pick-and-place task: Object and end-effector state observations
-        # ==============================================================================================
-        
-        # Get bread_box and support1 data
-        bread_box: Articulation = self.scene["bread_box"]
-        support1: Articulation = self.scene["support1"]
-        
-        # Get robot quaternion for coordinate transformation
-        robot_quat_conj = quat_conjugate(robot.data.root_link_quat_w)  # [num_envs, 4]
-        
-        # 1. End-effector (wrist) positions and velocities in robot body frame
-        wrist_pos_w = robot.data.body_pos_w[:, self.wrist_roll_body_ids, :]  # [num_envs, 2, 3]
-        wrist_vel_w = robot.data.body_lin_vel_w[:, self.wrist_roll_body_ids, :]  # [num_envs, 2, 3]
-        
-        # Reshape for quat_apply: [num_envs*2, 3]
-        wrist_pos_w_rel = wrist_pos_w - robot.data.root_link_pos_w.unsqueeze(1)  # [num_envs, 2, 3]
-        wrist_vel_w_rel = wrist_vel_w - robot.data.root_lin_vel_w.unsqueeze(1)  # [num_envs, 2, 3]
-        
-        wrist_pos_w_rel_flat = wrist_pos_w_rel.reshape(self.num_envs * 2, 3)
-        wrist_vel_w_rel_flat = wrist_vel_w_rel.reshape(self.num_envs * 2, 3)
-        
-        # Repeat quaternion for each wrist
-        robot_quat_conj_rep = robot_quat_conj.repeat_interleave(2, dim=0)  # [num_envs*2, 4]
-        
-        # Apply rotation
-        wrist_pos_b_flat = quat_apply(robot_quat_conj_rep, wrist_pos_w_rel_flat)
-        wrist_vel_b_flat = quat_apply(robot_quat_conj_rep, wrist_vel_w_rel_flat)
-        
-        # Reshape back to [num_envs, 2, 3]
-        wrist_pos_b = wrist_pos_b_flat.reshape(self.num_envs, 2, 3)
-        wrist_vel_b = wrist_vel_b_flat.reshape(self.num_envs, 2, 3)
-        
-        # 2. Object (bread_box) position and velocity in robot body frame
-        obj_pos_w = bread_box.data.root_pos_w  # [num_envs, 3]
-        obj_vel_w = bread_box.data.root_lin_vel_w  # [num_envs, 3]
-        
-        obj_pos_b = quat_apply(
-            robot_quat_conj,
-            obj_pos_w - robot.data.root_link_pos_w
-        )  # [num_envs, 3]
-        obj_vel_b = quat_apply(
-            robot_quat_conj,
-            obj_vel_w - robot.data.root_lin_vel_w
-        )  # [num_envs, 3]
-        
-        # 3. Target (support1) position in robot body frame
-        target_pos_w = support1.data.root_pos_w  # [num_envs, 3]
-        target_pos_b = quat_apply(
-            robot_quat_conj,
-            target_pos_w - robot.data.root_link_pos_w
-        )  # [num_envs, 3]
-        
-        # 4. Relative positions: hand-to-object for each wrist
-        hand_to_obj_pos_b = obj_pos_b.unsqueeze(1) - wrist_pos_b  # [num_envs, 2, 3]
-        hand_to_obj_vel_b = obj_vel_b.unsqueeze(1) - wrist_vel_b  # [num_envs, 2, 3]
-        
-        # 5. Distance from each hand to object (scalar)
-        hand_to_obj_dist = torch.norm(hand_to_obj_pos_b, dim=-1)  # [num_envs, 2]
-        
-        # 6. Object-to-target relative position and distance
-        obj_to_target_pos_b = target_pos_b - obj_pos_b  # [num_envs, 3]
-        obj_to_target_dist = torch.norm(obj_to_target_pos_b, dim=-1, keepdim=True)  # [num_envs, 1]
-        
-        # 7. Contact state: detect contact on wrist links
-        wrist_contact_forces = net_contact_forces[:, :, self.wrist_roll_body_ids, :]  # [num_envs, history, 2, 3]
-        wrist_contact_force_mag = torch.max(
-            torch.norm(wrist_contact_forces, dim=-1), dim=1
-        )[0]  # [num_envs, 2] - max over history
-        wrist_contact_state = (wrist_contact_force_mag > 1.0).float()  # [num_envs, 2]
-        
-        # 8. Normalized contact force magnitude
-        wrist_contact_force_normalized = torch.clamp(
-            wrist_contact_force_mag / 100.0, max=1.0
-        )  # [num_envs, 2]
-        
-        # Flatten and scale observations
-        hand_to_obj_pos_flat = hand_to_obj_pos_b.reshape(self.num_envs, -1)  # [num_envs, 6]
-        hand_to_obj_vel_flat = hand_to_obj_vel_b.reshape(self.num_envs, -1)  # [num_envs, 6]
-        
         current_actor_obs = torch.cat(
             [
                 ang_vel * self.obs_scales.ang_vel,  # 3
@@ -575,16 +485,6 @@ class TienKungEnv(VecEnv):
                 torch.sin(2 * torch.pi * self.gait_phase),  # 2
                 torch.cos(2 * torch.pi * self.gait_phase),  # 2
                 self.phase_ratio,  # 2
-                # ===== Pick-and-place task observations =====
-                hand_to_obj_pos_flat * 0.5,  # 6 (relative position scaling)
-                hand_to_obj_vel_flat * 0.5,  # 6 (relative velocity scaling)
-                hand_to_obj_dist * 0.5,  # 2 (distance from hands to object)
-                obj_pos_b * 0.5,  # 3 (object position in robot frame)
-                obj_vel_b * 0.5,  # 3 (object velocity in robot frame)
-                obj_to_target_pos_b * 0.5,  # 3 (object-to-target relative position)
-                obj_to_target_dist,  # 1 (object-to-target distance)
-                wrist_contact_state,  # 2 (contact state on each wrist)
-                wrist_contact_force_normalized,  # 2 (normalized contact force)
             ],
             dim=-1,
         )

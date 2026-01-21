@@ -165,51 +165,65 @@ class PickRewardCfg:
     hip_yaw_action = RewTerm(func=mdp.hip_yaw_action, weight=-1.0)
     feet_y_distance = RewTerm(func=mdp.feet_y_distance, weight=-2.0)
 
-    # ===================== Pick and Place Task Rewards (4 Categories) =====================
-    
-    # Category 1: Reach to bread_box
-    hand_distance_to_bread_box = RewTerm(
-        func=mdp.hand_distance_to_bread_box,
-        weight=0.6,
-        params={"std": 0.3},
-    )
-    
-    # Category 2: Grasp & Lift bread_box
-    wrist_contact_with_bread_box = RewTerm(
-        func=mdp.wrist_contact_with_bread_box,
+    # ==============================================================================================
+    # Pick-and-Place Task Rewards (Object Tracking & Interaction)
+    # ==============================================================================================
+    # Reach reward: Encourages end-effector to approach the object
+    reach_object = RewTerm(
+        func=mdp.reach_object,
         weight=1.0,
         params={
-            "sensor_cfg": SceneEntityCfg("contact_sensor", body_names=["wrist_roll.*"]),
-            "contact_threshold": 1.0,
+            "std": 0.5,
+            "ee_cfg": SceneEntityCfg("robot", body_names="wrist_roll_.*_link"),
+            "obj_cfg": SceneEntityCfg("bread_box"),
         },
     )
-    wrist_bread_box_contact_duration = RewTerm(
-        func=mdp.wrist_bread_box_contact_duration,
+
+    # Contact reward: Encourages making contact with the object
+    contact_object = RewTerm(
+        func=mdp.contact_object,
+        weight=1.0,
+        params={
+            "contact_threshold": 5.0,
+            "sensor_cfg": SceneEntityCfg("contact_sensor", body_names="wrist_roll_.*_link"),
+            "min_contact_force": 1.0,
+        },
+    )
+
+    # Grasp stability reward: Encourages maintaining a fixed relative transformation (grasp_lock)
+    # This should be gated to activate only when contact is established and object is lifted
+    grasp_stability = RewTerm(
+        func=mdp.grasp_stability,
+        weight=0.5,
+        params={
+            "alpha": 10.0,
+            "ee_cfg": SceneEntityCfg("robot", body_names="wrist_roll_.*_link"),
+            "obj_cfg": SceneEntityCfg("bread_box"),
+        },
+    )
+
+    # Carry reward: Encourages moving the object towards the target (support1)
+    carry_object = RewTerm(
+        func=mdp.carry_object,
         weight=0.8,
-        params={"wrist_contact_threshold": 1.0},
+        params={
+            "std": 0.3,
+            "obj_cfg": SceneEntityCfg("bread_box"),
+            "target_pos": None,  # Will use support1 position
+        },
     )
-    
-    # Category 3: Reach to support_1 (while holding bread_box)
-    bread_box_distance_to_support1 = RewTerm(
-        func=mdp.bread_box_distance_to_support1,
-        weight=0.7,
-        params={"std": 0.5},
+
+    # Place reward: Encourages precise placement of the object at the target
+    place_object = RewTerm(
+        func=mdp.place_object,
+        weight=1.5,
+        params={
+            "position_tolerance": 0.05,
+            "height_tolerance": 0.05,
+            "obj_cfg": SceneEntityCfg("bread_box"),
+            "target_pos": None,  # Will use support1 position
+        },
     )
-    
-    # Category 4: Place on support_1
-    bread_box_placement_on_support1 = RewTerm(
-        func=mdp.bread_box_placement_on_support1,
-        weight=2.5,
-        params={"xy_threshold": 0.15, "z_threshold": 0.05},
-    )
-    
-    task_completion_bonus = RewTerm(
-        func=mdp.task_completion_bonus,
-        weight=5.0,
-        params={"xy_threshold": 0.15, "z_threshold": 0.05},
-    )
-    
-    # ===================================================================================
 
 @configclass
 class TienKungPickFlatEnvCfg:
