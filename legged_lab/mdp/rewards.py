@@ -267,6 +267,189 @@ def track_upper_body_pose_from_amp(
     return torch.exp(-err / std**2)
 
 
+def track_upper_body_pose_from_amp_no_wrap(
+    env: BaseEnv | TienKungEnv, std: float, include_torso: bool = True, include_arms: bool = True
+) -> torch.Tensor:
+    """Track upper-body joint positions against the AMP reference motion without time wrapping."""
+    if not hasattr(env, "amp_loader_display"):
+        return torch.zeros(env.num_envs, device=env.device)
+
+    traj_len = float(env.amp_loader_display.trajectory_lens[0])
+    times = (env.episode_length_buf * env.step_dt).detach().cpu().numpy()
+    times = np.minimum(times, traj_len)
+    traj_idxs = np.zeros(env.num_envs, dtype=np.int64)
+    ref_frame = env.amp_loader_display.get_full_frame_at_time_batch(traj_idxs, times)
+    dof_pos_frame = ref_frame[:, 6 : 6 + env.motion_dof]
+
+    target_chunks = []
+    current_chunks = []
+
+    if include_torso and env.motion_dof in (24, 30):
+        target_chunks.append(dof_pos_frame[:, 12:16])
+        current_chunks.append(env.robot.data.joint_pos[:, env.torso_head_ids])
+
+    if include_arms:
+        if env.motion_dof == 20:
+            target_chunks.extend([dof_pos_frame[:, 12:16], dof_pos_frame[:, 16:20]])
+            current_chunks.extend(
+                [env.robot.data.joint_pos[:, env.left_arm_ids], env.robot.data.joint_pos[:, env.right_arm_ids]]
+            )
+        elif env.motion_dof == 24:
+            target_chunks.extend([dof_pos_frame[:, 16:20], dof_pos_frame[:, 20:24]])
+            current_chunks.extend(
+                [env.robot.data.joint_pos[:, env.left_arm_ids], env.robot.data.joint_pos[:, env.right_arm_ids]]
+            )
+        elif env.motion_dof == 30:
+            target_chunks.extend([dof_pos_frame[:, 16:23], dof_pos_frame[:, 23:30]])
+            current_chunks.extend(
+                [
+                    env.robot.data.joint_pos[:, env.left_arm_full_ids],
+                    env.robot.data.joint_pos[:, env.right_arm_full_ids],
+                ]
+            )
+
+    if not target_chunks:
+        return torch.zeros(env.num_envs, device=env.device)
+
+    target = torch.cat(target_chunks, dim=1)
+    current = torch.cat(current_chunks, dim=1)
+    err = torch.sum(torch.square(current - target), dim=1)
+    return torch.exp(-err / std**2)
+
+
+def track_lower_body_pose_from_amp_no_wrap(env: BaseEnv | TienKungEnv, std: float) -> torch.Tensor:
+    """Track lower-body (legs) joint positions against the AMP reference motion without time wrapping."""
+    if not hasattr(env, "amp_loader_display"):
+        return torch.zeros(env.num_envs, device=env.device)
+
+    traj_len = float(env.amp_loader_display.trajectory_lens[0])
+    times = (env.episode_length_buf * env.step_dt).detach().cpu().numpy()
+    times = np.minimum(times, traj_len)
+    traj_idxs = np.zeros(env.num_envs, dtype=np.int64)
+    ref_frame = env.amp_loader_display.get_full_frame_at_time_batch(traj_idxs, times)
+    dof_pos_frame = ref_frame[:, 6 : 6 + env.motion_dof]
+
+    if dof_pos_frame.shape[1] < 12:
+        return torch.zeros(env.num_envs, device=env.device)
+
+    target = torch.cat([dof_pos_frame[:, 0:6], dof_pos_frame[:, 6:12]], dim=1)
+    current = torch.cat(
+        [env.robot.data.joint_pos[:, env.left_leg_ids], env.robot.data.joint_pos[:, env.right_leg_ids]], dim=1
+    )
+    err = torch.sum(torch.square(current - target), dim=1)
+    return torch.exp(-err / std**2)
+
+
+def track_body_pose_progress_from_amp(
+    env: BaseEnv | TienKungEnv,
+    std: float,
+    delta_clip: float = 0.2,
+    include_legs: bool = True,
+    include_torso: bool = True,
+    include_arms: bool = True,
+) -> torch.Tensor:
+    """Reward error decrease between consecutive steps (no time wrapping)."""
+    if not hasattr(env, "amp_loader_display"):
+        return torch.zeros(env.num_envs, device=env.device)
+
+    traj_len = float(env.amp_loader_display.trajectory_lens[0])
+    times = (env.episode_length_buf * env.step_dt).detach().cpu().numpy()
+    times = np.minimum(times, traj_len)
+    traj_idxs = np.zeros(env.num_envs, dtype=np.int64)
+    ref_frame = env.amp_loader_display.get_full_frame_at_time_batch(traj_idxs, times)
+    dof_pos_frame = ref_frame[:, 6 : 6 + env.motion_dof]
+
+    target_chunks = []
+    current_chunks = []
+
+    if include_legs:
+        if dof_pos_frame.shape[1] < 12:
+            return torch.zeros(env.num_envs, device=env.device)
+        target_chunks.extend([dof_pos_frame[:, 0:6], dof_pos_frame[:, 6:12]])
+        current_chunks.extend(
+            [env.robot.data.joint_pos[:, env.left_leg_ids], env.robot.data.joint_pos[:, env.right_leg_ids]]
+        )
+
+    if include_torso and env.motion_dof in (24, 30):
+        target_chunks.append(dof_pos_frame[:, 12:16])
+        current_chunks.append(env.robot.data.joint_pos[:, env.torso_head_ids])
+
+    if include_arms:
+        if env.motion_dof == 20:
+            target_chunks.extend([dof_pos_frame[:, 12:16], dof_pos_frame[:, 16:20]])
+            current_chunks.extend(
+                [env.robot.data.joint_pos[:, env.left_arm_ids], env.robot.data.joint_pos[:, env.right_arm_ids]]
+            )
+        elif env.motion_dof == 24:
+            target_chunks.extend([dof_pos_frame[:, 16:20], dof_pos_frame[:, 20:24]])
+            current_chunks.extend(
+                [env.robot.data.joint_pos[:, env.left_arm_ids], env.robot.data.joint_pos[:, env.right_arm_ids]]
+            )
+        elif env.motion_dof == 30:
+            target_chunks.extend([dof_pos_frame[:, 16:23], dof_pos_frame[:, 23:30]])
+            current_chunks.extend(
+                [
+                    env.robot.data.joint_pos[:, env.left_arm_full_ids],
+                    env.robot.data.joint_pos[:, env.right_arm_full_ids],
+                ]
+            )
+
+    if not target_chunks:
+        return torch.zeros(env.num_envs, device=env.device)
+
+    target = torch.cat(target_chunks, dim=1)
+    current = torch.cat(current_chunks, dim=1)
+    err = torch.sum(torch.square(current - target), dim=1)
+
+    if not hasattr(env, "_amp_body_err_prev"):
+        env._amp_body_err_prev = torch.zeros(env.num_envs, device=env.device)
+        env._amp_body_err_reset = torch.ones(env.num_envs, device=env.device, dtype=torch.bool)
+
+    delta = env._amp_body_err_prev - err
+    if hasattr(env, "_amp_body_err_reset"):
+        delta = torch.where(env._amp_body_err_reset, torch.zeros_like(delta), delta)
+    delta = torch.clamp(delta, -delta_clip, delta_clip)
+
+    env._amp_body_err_prev = err.detach()
+    if hasattr(env, "reset_buf"):
+        env._amp_body_err_reset = env.reset_buf.clone()
+
+    return delta
+
+
+def amp_motion_completion_bonus(env: BaseEnv | TienKungEnv) -> torch.Tensor:
+    """Bonus when the episode time reaches the end of the reference clip."""
+    if not hasattr(env, "amp_loader_display"):
+        return torch.zeros(env.num_envs, device=env.device)
+
+    traj_len = float(env.amp_loader_display.trajectory_lens[0])
+    times = env.episode_length_buf * env.step_dt
+    return (times >= traj_len).float()
+
+
+def track_lower_body_pose_from_amp(env: BaseEnv | TienKungEnv, std: float) -> torch.Tensor:
+    """Track lower-body (legs) joint positions against the AMP reference motion."""
+    if not hasattr(env, "amp_loader_display"):
+        return torch.zeros(env.num_envs, device=env.device)
+
+    traj_len = float(env.amp_loader_display.trajectory_lens[0])
+    times = (env.episode_length_buf * env.step_dt).detach().cpu().numpy()
+    times = np.mod(times, traj_len)
+    traj_idxs = np.zeros(env.num_envs, dtype=np.int64)
+    ref_frame = env.amp_loader_display.get_full_frame_at_time_batch(traj_idxs, times)
+    dof_pos_frame = ref_frame[:, 6 : 6 + env.motion_dof]
+
+    if dof_pos_frame.shape[1] < 12:
+        return torch.zeros(env.num_envs, device=env.device)
+
+    target = torch.cat([dof_pos_frame[:, 0:6], dof_pos_frame[:, 6:12]], dim=1)
+    current = torch.cat(
+        [env.robot.data.joint_pos[:, env.left_leg_ids], env.robot.data.joint_pos[:, env.right_leg_ids]], dim=1
+    )
+    err = torch.sum(torch.square(current - target), dim=1)
+    return torch.exp(-err / std**2)
+
+
 # Periodic gait-based reward function
 def gait_clock(phase, air_ratio, delta_t):
     """
@@ -297,7 +480,7 @@ def gait_clock(phase, air_ratio, delta_t):
 
     Notes
     -----
-    - The transitions at the boundaries (e.g., swing→stance) are linear interpolations.
+    - The transitions at the boundaries (e.g., swingâ†’stance) are linear interpolations.
     - Used in reward shaping to associate expected behavior with gait phases.
     """
     swing_flag = (phase >= delta_t) & (phase <= (air_ratio - delta_t))

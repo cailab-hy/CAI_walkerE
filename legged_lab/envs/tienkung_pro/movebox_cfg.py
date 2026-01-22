@@ -150,10 +150,29 @@ class MoveBoxRewardCfg:
             )
         },
     )
+    lower_body_track = RewTerm(
+        func=mdp.track_lower_body_pose_from_amp_no_wrap,
+        weight=1.2,
+        params={"std": 0.6},
+    )
     upper_body_track = RewTerm(
-        func=mdp.track_upper_body_pose_from_amp,
-        weight=2.0,
-        params={"std": 0.4, "include_torso": True, "include_arms": True},
+        func=mdp.track_upper_body_pose_from_amp_no_wrap,
+        weight=1.2,
+        params={"std": 0.6, "include_torso": False, "include_arms": True},
+    )
+    upper_body_track_torso = RewTerm(
+        func=mdp.track_upper_body_pose_from_amp_no_wrap,
+        weight=1.0,
+        params={"std": 0.6, "include_torso": True, "include_arms": False},
+    )
+    motion_progress = RewTerm(
+        func=mdp.track_body_pose_progress_from_amp,
+        weight=1.0,
+        params={"std": 0.6, "delta_clip": 0.2, "include_legs": True, "include_torso": True, "include_arms": True},
+    )
+    motion_completion_bonus = RewTerm(
+        func=mdp.amp_motion_completion_bonus,
+        weight=5.0,
     )
     ankle_torque = RewTerm(func=mdp.ankle_torque, weight=-0.0002)
     ankle_action = RewTerm(func=mdp.ankle_action, weight=-0.0005)
@@ -169,7 +188,7 @@ class TienKungMoveBoxFlatEnvCfg:
     amp_full_dof: bool = True
     device: str = "cuda:0"
     scene: BaseSceneCfg = BaseSceneCfg(
-        max_episode_length_s=12.0,   # self.max_episode_length = np.ceil(self.max_episode_length_s / (self.cfg.sim.decimation * self.cfg.sim.dt)) = np.ceil(4.0 / (4.0 * 0.005)) = np.ceil(4.0 / 0.02) = 200
+        max_episode_length_s=9.7,   # self.max_episode_length = np.ceil(9.7 / (4.0 * 0.005)) = np.ceil(9.7 / 0.02) = 485
         # max_episode_length_s=1.0,   # self.max_episode_length = np.ceil(1.0 / 0.02) = 50
         num_envs=4096,
         env_spacing=2.5,
@@ -341,9 +360,9 @@ class TienKungMoveBoxAgentCfg(RslRlOnPolicyRunnerCfg):
     load_checkpoint = "model_.*.pt"
 
     # amp parameter
-    amp_reward_coef = 0.3
+    amp_reward_coef = 0.6
     amp_motion_files = ["legged_lab/envs/tienkung_pro/datasets/motion_amp_expert/move_box_v3.txt"]
     amp_num_preload_transitions = 200000
-    amp_task_reward_lerp = 0.7
+    amp_task_reward_lerp = 0.0
     amp_discr_hidden_dims = [1024, 512, 256]
     min_normalized_std = [0.05] * 20
