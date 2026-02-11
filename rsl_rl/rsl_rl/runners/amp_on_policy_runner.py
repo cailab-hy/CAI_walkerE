@@ -215,8 +215,12 @@ class AmpOnPolicyRunner:
         # Book keeping
         ep_infos = []
         rewbuffer = deque(maxlen=100)
+        task_rewbuffer = deque(maxlen=100)
+        amp_rewbuffer = deque(maxlen=100)
         lenbuffer = deque(maxlen=100)
         cur_reward_sum = torch.zeros(self.env.num_envs, dtype=torch.float, device=self.device)
+        cur_task_reward_sum = torch.zeros(self.env.num_envs, dtype=torch.float, device=self.device)
+        cur_amp_reward_sum = torch.zeros(self.env.num_envs, dtype=torch.float, device=self.device)
         cur_episode_length = torch.zeros(self.env.num_envs, dtype=torch.float, device=self.device)
 
         # create buffers for logging extrinsic and intrinsic rewards
@@ -245,6 +249,9 @@ class AmpOnPolicyRunner:
                     actions = self.alg.act(obs, privileged_obs, amp_obs)
                     # Step the environment
                     obs, rewards, dones, infos = self.env.step(actions.to(self.env.device))
+                    task_rewards = rewards.detach().clone()
+                    task_rewards = task_rewards.to(self.device)
+
                     next_amp_obs = self.env.get_amp_obs_for_expert_trans()
                     # Move to device
                     obs, rewards, dones, next_amp_obs = (
@@ -268,9 +275,9 @@ class AmpOnPolicyRunner:
                     terminal_amp_states = self.env.get_amp_obs_for_expert_trans()[reset_env_ids]
                     next_amp_obs_with_term[reset_env_ids] = terminal_amp_states
 
-                    rewards = self.alg.discriminator.predict_amp_reward(
+                    rewards, d, amp_rewards = self.alg.discriminator.predict_amp_reward(
                         amp_obs, next_amp_obs_with_term, rewards, normalizer=self.alg.amp_normalizer
-                    )[0]
+                    )
                     amp_obs = torch.clone(next_amp_obs)
                     self.alg.process_env_step(rewards, dones, infos, next_amp_obs_with_term)
 
@@ -290,12 +297,16 @@ class AmpOnPolicyRunner:
                             cur_reward_sum += rewards + intrinsic_rewards
                         else:
                             cur_reward_sum += rewards
+                            cur_task_reward_sum += task_rewards
+                            cur_amp_reward_sum += amp_rewards
                         # Update episode length
                         cur_episode_length += 1
                         # Clear data for completed episodes
                         # -- common
                         new_ids = (dones > 0).nonzero(as_tuple=False)
                         rewbuffer.extend(cur_reward_sum[new_ids][:, 0].cpu().numpy().tolist())
+                        task_rewbuffer.extend(cur_task_reward_sum[new_ids][:, 0].cpu().numpy().tolist())
+                        amp_rewbuffer.extend(cur_amp_reward_sum[new_ids][:, 0].cpu().numpy().tolist())
                         lenbuffer.extend(cur_episode_length[new_ids][:, 0].cpu().numpy().tolist())
                         cur_reward_sum[new_ids] = 0
                         cur_episode_length[new_ids] = 0
@@ -399,6 +410,8 @@ class AmpOnPolicyRunner:
                 self.writer.add_scalar("Rnd/weight", self.alg.rnd.weight, locs["it"])
             # everything else
             self.writer.add_scalar("Train/mean_reward", statistics.mean(locs["rewbuffer"]), locs["it"])
+            self.writer.add_scalar("Train/mean_task_reward", statistics.mean(locs["task_rewbuffer"]), locs["it"])
+            self.writer.add_scalar("Train/mean_amp_reward", statistics.mean(locs["amp_rewbuffer"]), locs["it"])
             self.writer.add_scalar("Train/mean_episode_length", statistics.mean(locs["lenbuffer"]), locs["it"])
             if self.logger_type != "wandb":  # wandb does not support non-integer x-axis logging
                 self.writer.add_scalar("Train/mean_reward/time", statistics.mean(locs["rewbuffer"]), self.tot_time)
