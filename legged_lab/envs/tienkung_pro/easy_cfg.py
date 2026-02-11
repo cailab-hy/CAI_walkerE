@@ -61,9 +61,9 @@ class GaitCfg:
 
 
 @configclass
-class LiteRewardCfg:
-    track_lin_vel_xy_exp = RewTerm(func=mdp.track_lin_vel_xy_yaw_frame_exp, weight=1.0, params={"std": 0.5})
-    track_ang_vel_z_exp = RewTerm(func=mdp.track_ang_vel_z_world_exp, weight=1.0, params={"std": 0.5})
+class EasyRewardCfg:
+    # track_lin_vel_xy_exp = RewTerm(func=mdp.track_lin_vel_xy_yaw_frame_exp, weight=1.0, params={"std": 0.5})
+    # track_ang_vel_z_exp = RewTerm(func=mdp.track_ang_vel_z_world_exp, weight=1.0, params={"std": 0.5})
     lin_vel_z_l2 = RewTerm(func=mdp.lin_vel_z_l2, weight=-1.0)
     ang_vel_xy_l2 = RewTerm(func=mdp.ang_vel_xy_l2, weight=-0.05)
     energy = RewTerm(func=mdp.energy, weight=-1e-3)
@@ -148,9 +148,9 @@ class LiteRewardCfg:
         },
     )
 
-    gait_feet_frc_perio = RewTerm(func=mdp.gait_feet_frc_perio, weight=1.0, params={"delta_t": 0.02})
-    gait_feet_spd_perio = RewTerm(func=mdp.gait_feet_spd_perio, weight=1.0, params={"delta_t": 0.02})
-    gait_feet_frc_support_perio = RewTerm(func=mdp.gait_feet_frc_support_perio, weight=0.6, params={"delta_t": 0.02})
+    # gait_feet_frc_perio = RewTerm(func=mdp.gait_feet_frc_perio, weight=1.0, params={"delta_t": 0.02})
+    # gait_feet_spd_perio = RewTerm(func=mdp.gait_feet_spd_perio, weight=1.0, params={"delta_t": 0.02})
+    # gait_feet_frc_support_perio = RewTerm(func=mdp.gait_feet_frc_support_perio, weight=0.6, params={"delta_t": 0.02})
 
     ankle_torque = RewTerm(func=mdp.ankle_torque, weight=-0.0005)
     ankle_action = RewTerm(func=mdp.ankle_action, weight=-0.001)
@@ -158,23 +158,21 @@ class LiteRewardCfg:
     hip_yaw_action = RewTerm(func=mdp.hip_yaw_action, weight=-1.0)
     feet_y_distance = RewTerm(func=mdp.feet_y_distance, weight=-2.0)
 
-
 @configclass
-class TienKungJabFlatEnvCfg:
+class TienKungEasyFlatEnvCfg:
     amp_motion_files_display = [
-        "legged_lab/envs/tienkung_pro/datasets/motion_visualization/E1_-__Jab_left_stageii.txt"
+        "legged_lab/envs/tienkung_pro/datasets/motion_visualization/raise_box_v2.txt"
     ]
     amp_full_dof: bool = True
     device: str = "cuda:0"
     scene: BaseSceneCfg = BaseSceneCfg(
-        max_episode_length_s=20.0,
+        max_episode_length_s=4.0,   # self.max_episode_length = np.ceil(self.max_episode_length_s / (self.cfg.sim.decimation * self.cfg.sim.dt)) = np.ceil(4.0 / (4.0 * 0.005)) = np.ceil(4.0 / 0.02) = 200
+        # max_episode_length_s=1.0,   # self.max_episode_length = np.ceil(1.0 / 0.02) = 50
         num_envs=4096,
         env_spacing=2.5,
         robot=TIENKUNG_PRO_CFG,
-        terrain_type="generator",
-        terrain_generator=GRAVEL_TERRAINS_CFG,
-        # terrain_type="plane",
-        # terrain_generator= None,
+        terrain_type="plane",
+        terrain_generator=None,
         max_init_terrain_level=5,
         height_scanner=HeightScannerCfg(
             enable_height_scan=False,
@@ -189,10 +187,11 @@ class TienKungJabFlatEnvCfg:
         actor_obs_history_length=10,
         critic_obs_history_length=10,
         action_scale=0.25,
-        terminate_contacts_body_names=["knee_pitch.*", "shoulder_roll.*", "elbow_pitch.*", "pelvis"],
+        # terminate_contacts_body_names=["knee_pitch.*", "pelvis"],
+        terminate_contacts_body_names=["head_roll.*", "body_yaw.*", "hip_yaw.*", "knee_pitch.*", "shoulder_roll.*", "elbow_pitch.*", "pelvis"],
         feet_body_names=["ankle_roll.*"],
     )
-    reward = LiteRewardCfg()
+    reward = EasyRewardCfg()
     gait = GaitCfg()
     normalization: NormalizationCfg = NormalizationCfg(
         obs_scales=ObsScalesCfg(
@@ -210,14 +209,14 @@ class TienKungJabFlatEnvCfg:
         height_scan_offset=0.5,
     )
     commands: CommandsCfg = CommandsCfg(
-        resampling_time_range=(10.0, 10.0),
-        rel_standing_envs=0.2,
-        rel_heading_envs=1.0,
-        heading_command=True,
-        heading_control_stiffness=0.5,
-        debug_vis=True,
+        resampling_time_range=(1000.0, 1000.0),
+        rel_standing_envs=1.0,
+        rel_heading_envs=0.0,
+        heading_command=False,
+        heading_control_stiffness=0.0,
+        debug_vis=False,
         ranges=CommandRangesCfg(
-            lin_vel_x=(-0.6, 1.0), lin_vel_y=(-0.5, 0.5), ang_vel_z=(-1.57, 1.57), heading=(-math.pi, math.pi)
+            lin_vel_x=(0.0, 0.0), lin_vel_y=(0.0, 0.0), ang_vel_z=(0.0, 0.0), heading=(0.0, 0.0)
         ),
     )
     noise: NoiseCfg = NoiseCfg(
@@ -285,11 +284,16 @@ class TienKungJabFlatEnvCfg:
         ),
         action_delay=ActionDelayCfg(enable=False, params={"max_delay": 5, "min_delay": 0}),
     )
+
+    # Origin HZ version (HZ = 1/(dt*decimation) = 1/0.02 = 50)
     sim: SimCfg = SimCfg(dt=0.005, decimation=4, physx=PhysxCfg(gpu_max_rigid_patch_count=10 * 2**15))
+    
+    # Edit Lower HZ version ((HZ = 1/0.05 = 20))
+    # sim: SimCfg = SimCfg(dt=0.0125, decimation=4, physx=PhysxCfg(gpu_max_rigid_patch_count=10 * 2**15))
 
 
 @configclass
-class TienKungJabAgentCfg(RslRlOnPolicyRunnerCfg):
+class TienKungEasyAgentCfg(RslRlOnPolicyRunnerCfg):
     seed = 42
     device = "cuda:0"
     num_steps_per_env = 24
@@ -324,19 +328,19 @@ class TienKungJabAgentCfg(RslRlOnPolicyRunnerCfg):
     clip_actions = None
     save_interval = 100
     runner_class_name = "AmpOnPolicyRunner"
-    experiment_name = "jab"
+    experiment_name = "easy_motion"
     run_name = ""
     logger = "tensorboard"
-    neptune_project = "jab"
-    wandb_project = "jab"
+    neptune_project = "easy_motion"
+    wandb_project = "easy_motion"
     resume = False
     load_run = ".*"
     load_checkpoint = "model_.*.pt"
 
     # amp parameter
-    amp_reward_coef = 0.3
-    amp_motion_files = ["legged_lab/envs/tienkung_pro/datasets/motion_amp_expert/E1_-__Jab_left_stageii.txt"]
+    amp_reward_coef = 0.5           # Default: 0.3
+    amp_motion_files = ["legged_lab/envs/tienkung_pro/datasets/motion_amp_expert/raise_box_v2.txt"]
     amp_num_preload_transitions = 200000
-    amp_task_reward_lerp = 0.7
+    amp_task_reward_lerp = 0.5      # Default: 0.7
     amp_discr_hidden_dims = [1024, 512, 256]
     min_normalized_std = [0.05] * 20

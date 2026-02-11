@@ -342,7 +342,7 @@ class TienKungEnv(VecEnv):
         env_ids = torch.arange(self.num_envs, device=device)
 
         root_pos = visual_motion_frame[:3].clone()
-        root_pos[2] += 0.3
+        # root_pos[2] += 0.3
 
         euler = visual_motion_frame[3:6].cpu().numpy()
         quat_xyzw = Rotation.from_euler("XYZ", euler, degrees=False).as_quat()  # [x, y, z, w]

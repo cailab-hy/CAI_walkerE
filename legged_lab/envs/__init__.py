@@ -49,6 +49,7 @@ from legged_lab.envs.tienkung_walkerE.walk_with_sensor_cfg import (
 from legged_lab.envs.tienkung_walkerE.walk_with_sensor_cfg import (
     TienKungWalkWithSensorFlatEnvCfg as TienKungWalkerEWalkWithSensorFlatEnvCfg,
 )
+# --- Tienkung Pro ----------------------------------------------------------------------------------
 from legged_lab.envs.tienkung_pro.run_cfg import TienKungRunAgentCfg as TienKungProRunAgentCfg
 from legged_lab.envs.tienkung_pro.run_cfg import TienKungRunFlatEnvCfg as TienKungProRunFlatEnvCfg
 from legged_lab.envs.tienkung_pro.run_with_sensor_cfg import (
@@ -58,8 +59,9 @@ from legged_lab.envs.tienkung_pro.run_with_sensor_cfg import (
     TienKungRunWithSensorFlatEnvCfg as TienKungProRunWithSensorFlatEnvCfg,
 )
 from legged_lab.envs.tienkung_pro.tienkung_env import TienKungEnv as TienKungProEnv
-from legged_lab.envs.tienkung_pro.jab_cfg import TienKungJabAgentCfg as TienKungProJabAgentCfg
-from legged_lab.envs.tienkung_pro.jab_cfg import TienKungJabFlatEnvCfg as TienKungProJabFlatEnvCfg
+
+from legged_lab.envs.tienkung_pro.easy_cfg import TienKungEasyAgentCfg as TienKungProEasyAgentCfg
+from legged_lab.envs.tienkung_pro.easy_cfg import TienKungEasyFlatEnvCfg as TienKungProEasyFlatEnvCfg
 from legged_lab.envs.tienkung_pro.walk_cfg import TienKungWalkAgentCfg as TienKungProWalkAgentCfg
 from legged_lab.envs.tienkung_pro.walk_cfg import TienKungWalkFlatEnvCfg as TienKungProWalkFlatEnvCfg
 from legged_lab.envs.tienkung_pro.walk_with_sensor_cfg import (
@@ -68,6 +70,7 @@ from legged_lab.envs.tienkung_pro.walk_with_sensor_cfg import (
 from legged_lab.envs.tienkung_pro.walk_with_sensor_cfg import (
     TienKungWalkWithSensorFlatEnvCfg as TienKungProWalkWithSensorFlatEnvCfg,
 )
+# ---------------------------------------------------------------------------------------------------
 from legged_lab.utils.task_registry import task_registry
 
 task_registry.register("walk", TienKungEnv, TienKungWalkFlatEnvCfg(), TienKungWalkAgentCfg())
@@ -96,9 +99,11 @@ task_registry.register(
     TienKungWalkerERunWithSensorFlatEnvCfg(),
     TienKungWalkerERunWithSensorAgentCfg(),
 )
+
+# --- Tienkung Pro ----------------------------------------------------------------------------------
 task_registry.register("pro_walk", TienKungProEnv, TienKungProWalkFlatEnvCfg(), TienKungProWalkAgentCfg())
 task_registry.register("pro_run", TienKungProEnv, TienKungProRunFlatEnvCfg(), TienKungProRunAgentCfg())
-task_registry.register("pro_jab", TienKungProEnv, TienKungProJabFlatEnvCfg(), TienKungProJabAgentCfg())
+task_registry.register("pro_easy", TienKungProEnv, TienKungProEasyFlatEnvCfg(), TienKungProEasyAgentCfg())
 task_registry.register(
     "pro_walk_with_sensor",
     TienKungProEnv,
@@ -111,3 +116,4 @@ task_registry.register(
     TienKungProRunWithSensorFlatEnvCfg(),
     TienKungProRunWithSensorAgentCfg(),
 )
+# ---------------------------------------------------------------------------------------------------
