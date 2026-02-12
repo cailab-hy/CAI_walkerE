@@ -297,8 +297,9 @@ class AmpOnPolicyRunner:
                             cur_reward_sum += rewards + intrinsic_rewards
                         else:
                             cur_reward_sum += rewards
-                            cur_task_reward_sum += task_rewards
-                            cur_amp_reward_sum += amp_rewards
+                        # Update AMP task and amp rewards (always tracked)
+                        cur_task_reward_sum += task_rewards
+                        cur_amp_reward_sum += amp_rewards
                         # Update episode length
                         cur_episode_length += 1
                         # Clear data for completed episodes
@@ -309,6 +310,8 @@ class AmpOnPolicyRunner:
                         amp_rewbuffer.extend(cur_amp_reward_sum[new_ids][:, 0].cpu().numpy().tolist())
                         lenbuffer.extend(cur_episode_length[new_ids][:, 0].cpu().numpy().tolist())
                         cur_reward_sum[new_ids] = 0
+                        cur_task_reward_sum[new_ids] = 0
+                        cur_amp_reward_sum[new_ids] = 0
                         cur_episode_length[new_ids] = 0
                         # -- intrinsic and extrinsic rewards
                         if self.alg.rnd:
