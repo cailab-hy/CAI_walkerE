@@ -338,9 +338,9 @@ class TienKungEasyAgentCfg(RslRlOnPolicyRunnerCfg):
     load_checkpoint = "model_.*.pt"
 
     # amp parameter
-    amp_reward_coef = 3.0            # Default: 0.3
+    amp_reward_coef = 0.5           # 3.0       # Default: 0.3
     amp_motion_files = ["legged_lab/envs/tienkung_pro/datasets/motion_amp_expert/jab_sh.txt"]
     amp_num_preload_transitions = 200000
-    amp_task_reward_lerp = 0.15      # Default: 0.7
+    amp_task_reward_lerp = 0.5      # 0.15      # Default: 0.7
     amp_discr_hidden_dims = [1024, 512, 256]
     min_normalized_std = [0.05] * 20
